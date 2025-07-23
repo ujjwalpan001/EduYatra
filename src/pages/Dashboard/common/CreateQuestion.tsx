@@ -12,7 +12,7 @@ import 'katex/dist/katex.min.css';
 import { renderKatex, KatexRenderer } from '@/lib/katex-rendering';
 import ReactDOMServer from 'react-dom/server';
 import { toast } from "sonner";
-import { jwtDecode } from 'jwt-decode'; // Add this dependency
+import { jwtDecode } from 'jwt-decode';
 
 const subjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
 const questionTypes = ["MCQ", "True/False", "Fill in the Blanks", "Short Answer"];
@@ -252,7 +252,23 @@ const CreateQuestion = () => {
           }
         };
         await refreshData();
-        setFormData(prev => ({ ...prev, questionBankName: '', courseCode: '', instituteName: '' }));
+        // Reset only Question Details fields
+        setFormData(prev => ({
+          ...prev,
+          question: '',
+          subject: '',
+          difficulty: 'Medium',
+          correctOption: '',
+          incorrectOptions: ['', '', ''],
+          image: null,
+          topic: '',
+          solution: '',
+          questionType: 'MCQ'
+        }));
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
         toast.error(`❌ Failed to save question: ${result.error || result.message || 'Unknown error'}`);
       }
