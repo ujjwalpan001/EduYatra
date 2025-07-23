@@ -132,7 +132,7 @@ const TestPage: React.FC = () => {
       }
       setIsLoadingQuestions(true);
       try {
-        const response = await fetchWithAuth(`http://localhost:5000/api/exams/${examId}/questions`, {
+        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/questions`, {
           method: 'GET',
         });
         const data = await response.json();
@@ -317,7 +317,7 @@ const TestPage: React.FC = () => {
       }
     });
     try {
-      const response = await fetchWithAuth('http://localhost:5000/api/submit-test', {
+      const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/submit-test', {
         method: 'POST',
         body: JSON.stringify({
           examId,

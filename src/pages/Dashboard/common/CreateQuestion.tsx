@@ -81,19 +81,19 @@ const CreateQuestion = () => {
       try {
         const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-        const qbResponse = await fetch("http://localhost:5000/api/questions/questionBanks", { headers });
+        const qbResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/questionBanks", { headers });
         const qbResult = await qbResponse.json();
         if (qbResponse.ok) {
           setQuestionBanks(qbResult.questionBanks.map((qb: any) => qb.name));
         }
 
-        const courseResponse = await fetch("http://localhost:5000/api/questions/courses", { headers });
+        const courseResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/courses", { headers });
         const courseResult = await courseResponse.json();
         if (courseResponse.ok) {
           setCourses(courseResult.courses.map((course: any) => course.course_code));
         }
 
-        const instituteResponse = await fetch("http://localhost:5000/api/questions/institutes", { headers });
+        const instituteResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/institutes", { headers });
         const instituteResult = await instituteResponse.json();
         if (instituteResponse.ok) {
           setInstitutes(instituteResult.institutes.map((institute: any) => institute.name));
@@ -219,7 +219,7 @@ const CreateQuestion = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch("http://localhost:5000/api/questions", {
+      const response = await fetch("https://eduyatrabackend.onrender.com/api/questions", {
         method: "POST",
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -235,17 +235,17 @@ const CreateQuestion = () => {
         console.log(result);
         const refreshData = async () => {
           const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-          const qbResponse = await fetch("http://localhost:5000/api/questions/questionBanks", { headers });
+          const qbResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/questionBanks", { headers });
           if (qbResponse.ok) {
             const qbResult = await qbResponse.json();
             setQuestionBanks(qbResult.questionBanks.map((qb: any) => qb.name));
           }
-          const courseResponse = await fetch("http://localhost:5000/api/questions/courses", { headers });
+          const courseResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/courses", { headers });
           if (courseResponse.ok) {
             const courseResult = await courseResponse.json();
             setCourses(courseResult.courses.map((course: any) => course.course_code));
           }
-          const instituteResponse = await fetch("http://localhost:5000/api/questions/institutes", { headers });
+          const instituteResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/institutes", { headers });
           if (instituteResponse.ok) {
             const instituteResult = await instituteResponse.json();
             setInstitutes(instituteResult.institutes.map((institute: any) => institute.name));

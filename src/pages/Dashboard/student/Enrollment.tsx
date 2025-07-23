@@ -137,7 +137,7 @@ const Enrollment: React.FC = () => {
     const fetchExams = async () => {
       setLoading(true);
       try {
-        const response = await fetchWithAuth('http://localhost:5000/api/exams/assigned');
+        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/assigned');
         const data = await response.json();
         console.log('Assigned exams response:', data);
 
