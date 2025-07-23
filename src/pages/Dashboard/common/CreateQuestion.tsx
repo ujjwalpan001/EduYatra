@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { jwtDecode } from 'jwt-decode';
 
 const subjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
+const questionSubjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
 const questionTypes = ["MCQ", "True/False", "Fill in the Blanks", "Short Answer"];
 const difficultyLevels = ["Easy", "Medium", "Hard"];
 
@@ -252,16 +253,14 @@ const CreateQuestion = () => {
           }
         };
         await refreshData();
-        // Reset only Question Details fields
+        // Reset only specific Question Details fields, preserving subject and topic
         setFormData(prev => ({
           ...prev,
           question: '',
-          subject: '',
           difficulty: 'Medium',
           correctOption: '',
           incorrectOptions: ['', '', ''],
           image: null,
-          topic: '',
           solution: '',
           questionType: 'MCQ'
         }));
