@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { KatexRenderer } from '@/lib/katex-rendering'; // Import KaTeX renderer
+import 'katex/dist/katex.min.css'; // Import KaTeX styles
 
 // Utility function for authenticated API calls with enhanced error handling
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
@@ -673,7 +675,9 @@ const ConductTestOnline: React.FC = () => {
                     {questions.map(q => (
                       <div key={q.id} className="text-sm p-3 bg-muted/50 rounded flex justify-between items-center">
                         <div>
-                          <div className="font-medium">Q: {q.text}</div>
+                          <div className="font-medium">
+                            <KatexRenderer>{q.text}</KatexRenderer> {/* Render LaTeX content */}
+                          </div>
                           <div className="text-muted-foreground">{q.type} • {q.marks} marks</div>
                         </div>
                         <Button
@@ -962,7 +966,7 @@ const ConductTestOnline: React.FC = () => {
                                 .slice(0, exams.find(exam => exam.id === selectedExamId)?.numberOfQuestionsPerSet)
                                 .map((questionId, qIndex) => (
                                   <li key={questionId} className="text-sm">
-                                    Question {qIndex + 1}: {questions.find(q => q.id === questionId)?.text || `Question ${questionId}`}
+                                    Question {qIndex + 1}: <KatexRenderer>{questions.find(q => q.id === questionId)?.text || `Question ${questionId}`}</KatexRenderer>
                                     <span className="text-muted-foreground"> ({questions.find(q => q.id === questionId)?.type || 'MCQ'}, {questions.find(q => q.id === questionId)?.marks || 1} marks)</span>
                                   </li>
                                 ))}
