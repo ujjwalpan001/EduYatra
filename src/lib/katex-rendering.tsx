@@ -5,14 +5,35 @@ import React from 'react';
 type LatexContent = string | undefined | null;
 
 /**
+ * Checks if content is likely LaTeX (basic heuristic)
+ * @param content The text to check
+ * @returns True if content resembles LaTeX
+ */
+const isLatexLike = (content: string): boolean => {
+  // Basic heuristic: look for common LaTeX patterns (e.g., \, ^, _, or commands)
+  return /\\[a-zA-Z]+|\^|_|\{|\}/.test(content);
+};
+
+/**
  * Renders text with LaTeX expressions
  * @param content The text content to render
  * @param isInline Whether to force inline rendering
+ * @param isRawLatex Whether the content is raw LaTeX (no delimiters)
  * @returns React nodes with rendered LaTeX
  */
-export const renderKatex = (content: LatexContent, isInline = false): React.ReactNode => {
+export const renderKatex = (
+  content: LatexContent,
+  isInline = false,
+  isRawLatex = false
+): React.ReactNode => {
   if (!content) return null;
 
+  // If marked as raw LaTeX or content looks like LaTeX and no delimiters, render as block math
+  if (!isInline && isRawLatex || (isLatexLike(content) && !/\$\$.*?\$\$|\$.*?\$/.test(content))) {
+    return <BlockMath math={content} />;
+  }
+
+  // Otherwise, split and process delimiters as before
   return content.split(/(\$\$.*?\$\$|\$.*?\$)/).map((part, i) => {
     if (part.startsWith('$$') && part.endsWith('$$') && !isInline) {
       return <BlockMath key={i} math={part.slice(2, -2)} />;
@@ -26,15 +47,17 @@ export const renderKatex = (content: LatexContent, isInline = false): React.Reac
 /**
  * React component for LaTeX rendering with error boundary
  */
-export const KatexRenderer = ({ 
-  children, 
-  isInline = false 
-}: { 
-  children: LatexContent; 
-  isInline?: boolean 
+export const KatexRenderer = ({
+  children,
+  isInline = false,
+  isRawLatex = false,
+}: {
+  children: LatexContent;
+  isInline?: boolean;
+  isRawLatex?: boolean;
 }) => {
   try {
-    return <>{renderKatex(children, isInline)}</>;
+    return <>{renderKatex(children, isInline, isRawLatex)}</>;
   } catch (error) {
     console.error('Katex rendering error:', error);
     return <span className="text-red-500">{children}</span>;
@@ -45,5 +68,5 @@ export const KatexRenderer = ({
  * Checks if text contains LaTeX expressions
  */
 export const hasKatex = (content: LatexContent): boolean => {
-  return !!content && /\$(.*?)\$/.test(content);
+  return !!content && (/\$(.*?)\$/.test(content) || isLatexLike(content));
 };
