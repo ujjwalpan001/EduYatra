@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, UserPlus } from "lucide-react";
 import axios from "axios";
 
 interface Institute {
@@ -70,6 +70,7 @@ export function StudentBatchList() {
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditStudentDialogOpen, setIsEditStudentDialogOpen] = useState(false);
+  const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
   const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [batchName, setBatchName] = useState("");
@@ -235,6 +236,17 @@ export function StudentBatchList() {
     setPastedStudentData("");
     setUploadedFile(null);
     setIsDialogOpen(true);
+  };
+
+  // Open dialog for adding student to existing batch
+  const handleAddStudentToBatch = (batchId: string) => {
+    setEditingBatchId(batchId);
+    setNewStudentName("");
+    setNewStudentEmail("");
+    setNewStudentUserId("");
+    setPastedStudentData("");
+    setUploadedFile(null);
+    setIsAddStudentDialogOpen(true);
   };
 
   // Open dialog for editing batch
@@ -420,6 +432,82 @@ export function StudentBatchList() {
     }
   };
 
+  // Save student to existing batch
+  const saveStudentToBatch = async () => {
+    if (!editingBatchId || (!newStudentName && !pastedStudentData && !uploadedFile)) {
+      toast({
+        title: "Invalid input",
+        description: "Please provide student details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let students: Student[] = [];
+    if (newStudentName && newStudentEmail && newStudentUserId) {
+      students = addSingleStudent(students);
+    }
+    students = addPastedStudents(students);
+    if (uploadedFile) {
+      students = await addStudentsFromFile(students);
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await axios.post(
+        `/api/classes/${editingBatchId}/students`,
+        { students },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setBatches(prevBatches =>
+        prevBatches.map(batch =>
+          batch.id === editingBatchId
+            ? {
+                ...batch,
+                students: [
+                  ...(batch.students || []),
+                  ...students.map(s => ({
+                    ...s,
+                    id: s.id,
+                    batchId: editingBatchId,
+                  })),
+                ],
+              }
+            : batch
+        )
+      );
+
+      toast({
+        title: "Students added",
+        description: `Added ${students.length} student(s) to batch`,
+      });
+
+      setIsAddStudentDialogOpen(false);
+      setNewStudentName("");
+      setNewStudentEmail("");
+      setNewStudentUserId("");
+      setPastedStudentData("");
+      setUploadedFile(null);
+      setEditingBatchId(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to add students.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Open edit student dialog
   const handleEditStudent = (batchId: string, student: Student) => {
     setEditingBatchId(batchId);
@@ -585,6 +673,14 @@ export function StudentBatchList() {
                 <h2 className="text-xl font-semibold">{batch.name}</h2>
                 <div className="flex gap-2">
                   <Button
+                    onClick={() => handleAddStudentToBatch(batch.id)}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Student
+                  </Button>
+                  <Button
                     onClick={() => handleEditBatch(batch.id, batch.name)}
                     size="sm"
                     variant="outline"
@@ -741,6 +837,76 @@ export function StudentBatchList() {
             </Button>
             <Button onClick={saveBatch}>
               {editingBatchId ? 'Save Changes' : 'Create Batch'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Student to Existing Batch Dialog */}
+      <Dialog open={isAddStudentDialogOpen} onOpenChange={setIsAddStudentDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Student to Batch</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Add Single Student</label>
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  placeholder="Student Name"
+                  value={newStudentName}
+                  onChange={(e) => setNewStudentName(e.target.value)}
+                />
+                <Input
+                  placeholder="Email"
+                  value={newStudentEmail}
+                  onChange={(e) => setNewStudentEmail(e.target.value)}
+                />
+                <Input
+                  placeholder="User ID"
+                  value={newStudentUserId}
+                  onChange={(e) => setNewStudentUserId(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Paste Student Data</label>
+              <Textarea
+                placeholder="Paste student data (name,email,userId per line)"
+                value={pastedStudentData}
+                onChange={(e) => setPastedStudentData(e.target.value)}
+                className="h-32"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Upload CSV/TXT File</label>
+              <Input
+                type="file"
+                accept=".csv,.txt"
+                onChange={handleFileChange}
+              />
+              <p className="text-sm text-muted-foreground">
+                Upload CSV/txt file with format: name,email,userId
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddStudentDialogOpen(false);
+                setNewStudentName("");
+                setNewStudentEmail("");
+                setNewStudentUserId("");
+                setPastedStudentData("");
+                setUploadedFile(null);
+                setEditingBatchId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={saveStudentToBatch}>
+              Add Students
             </Button>
           </DialogFooter>
         </DialogContent>
