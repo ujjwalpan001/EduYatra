@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,7 +132,7 @@ const TestPage: React.FC = () => {
       }
       setIsLoadingQuestions(true);
       try {
-        const response = await fetchWithAuth(`http://localhost:5000/api/exams/${examId}/questions`, {
+        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/questions`, {
           method: 'GET',
         });
         const data = await response.json();
@@ -318,7 +317,7 @@ const TestPage: React.FC = () => {
       }
     });
     try {
-      const response = await fetchWithAuth('http://localhost:5000/api/submit-test', {
+      const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/submit-test', {
         method: 'POST',
         body: JSON.stringify({
           examId,
@@ -513,30 +512,15 @@ const TestPage: React.FC = () => {
                   value={answers[questions[currentQuestion]?.id || ''] || ''}
                   onValueChange={(value) => handleAnswerChange(questions[currentQuestion]?.id || '', value)}
                   disabled={!questions[currentQuestion]}
-                  className="space-y-3"
                 >
-                  {questions[currentQuestion].options.map((option, index) => {
-                    const optionLabel = String.fromCharCode(97 + index); // Converts index to 'a', 'b', 'c', 'd'
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-all duration-200"
-                      >
-                        <RadioGroupItem
-                          value={option}
-                          id={`option-${index}`}
-                          className="h-5 w-5 text-blue-600"
-                        />
-                        <Label
-                          htmlFor={`option-${index}`}
-                          className="text-lg font-medium text-gray-800 flex items-center"
-                        >
-                          <span className="w-8 mr-3 font-semibold">{optionLabel})</span>
-                          <KatexRenderer>{option}</KatexRenderer>
-                        </Label>
-                      </div>
-                    );
-                  })}
+                  {questions[currentQuestion].options.map((option, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option} id={`option-${index}`} />
+                      <Label htmlFor={`option-${index}`} className="text-gray-700">
+                        <KatexRenderer>{option}</KatexRenderer>
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               ) : (
                 <p className="text-red-500">No options available for this question</p>
