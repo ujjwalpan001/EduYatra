@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,12 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Globe, Clock, Check, X, Settings, Users, Calendar, Save, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { KatexRenderer } from '@/lib/katex-rendering'; // Import KaTeX renderer
-import 'katex/dist/katex.min.css'; // Import KaTeX styles
+import { KatexRenderer } from '@/lib/katex-rendering';
+import 'katex/dist/katex.min.css';
 
 // Utility function for authenticated API calls with enhanced error handling
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
@@ -146,6 +146,8 @@ const ConductTestOnline: React.FC = () => {
   const [isManageExamOpen, setIsManageExamOpen] = useState(true);
   const [showQuestionSets, setShowQuestionSets] = useState(false);
   const [questionBankId, setQuestionBankId] = useState('');
+  const manageExamRef = useRef<HTMLDivElement>(null);
+  const previewQuestionPaperRef = useRef<HTMLDivElement>(null);
 
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<TestFormValues>({
     resolver: zodResolver(testFormSchema),
@@ -186,9 +188,9 @@ const ConductTestOnline: React.FC = () => {
       setLoadingBanks(true);
       try {
         const [banksRes, groupsRes, examsRes] = await Promise.all([
-          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/question-banks'),
-          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/groups'),
-          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/all'),
+          fetchWithAuth('http://localhost:5000/api/exams/question-banks'),
+          fetchWithAuth('http://localhost:5000/api/exams/groups'),
+          fetchWithAuth('http://localhost:5000/api/exams/all'),
         ]);
 
         const [banksData, groupsData, examsData] = await Promise.all([
@@ -248,7 +250,7 @@ const ConductTestOnline: React.FC = () => {
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       try {
-        const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/questions?questionBankId=${questionBankId}`);
+        const res = await fetchWithAuth(`http://localhost:5000/api/exams/questions?questionBankId=${questionBankId}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch questions');
         setQuestions(data.questions?.map((q: any) => ({
@@ -301,7 +303,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}/security`, {
+      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}/security`, {
         method: 'PATCH',
         body: JSON.stringify(securitySettings),
       });
@@ -323,7 +325,7 @@ const ConductTestOnline: React.FC = () => {
     }
     try {
       console.log(`Assigning exam ${examId} to group ${groupId}`);
-      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/assign-group`, {
+      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${examId}/assign-group`, {
         method: 'POST',
         body: JSON.stringify({ groupId }),
       });
@@ -354,7 +356,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}`, {
+      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}`, {
         method: 'PATCH',
         body: JSON.stringify({ duration_minutes: duration }),
       });
@@ -377,7 +379,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}`, {
+      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}`, {
         method: 'PATCH',
         body: JSON.stringify({
           title: data.testName,
@@ -414,7 +416,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}/schedule`, {
+      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}/schedule`, {
         method: 'PATCH',
         body: JSON.stringify(schedule),
       });
@@ -436,12 +438,24 @@ const ConductTestOnline: React.FC = () => {
       toast.error('Please select an exam to preview');
       return;
     }
+    setShowQuestionSets(true); // Automatically show question sets when previewing
     toast.success('Question paper preview opened (simulated)');
     console.log('Preview question paper:', { examId: selectedExamId });
   };
 
   const toggleQuestionSets = () => setShowQuestionSets(!showQuestionSets);
   const toggleManageExam = () => setIsManageExamOpen(!isManageExamOpen);
+
+  const handleSelectExam = (examId: string, action: 'view' | 'manage') => {
+    setSelectedExamId(examId);
+    setIsManageExamOpen(true);
+    if (action === 'view' && previewQuestionPaperRef.current) {
+      setShowQuestionSets(true); // Show question sets for view action
+      previewQuestionPaperRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else if (action === 'manage' && manageExamRef.current) {
+      manageExamRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const onSubmit = async (data: TestFormValues) => {
     if (!selectedGroup) {
@@ -480,7 +494,7 @@ const ConductTestOnline: React.FC = () => {
     };
 
     try {
-      const res = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/create', {
+      const res = await fetchWithAuth('http://localhost:5000/api/exams/create', {
         method: 'POST',
         body: JSON.stringify(examData),
       });
@@ -508,6 +522,7 @@ const ConductTestOnline: React.FC = () => {
 
   return (
     <Layout>
+      <Toaster position="top-center" richColors />
       <div className="p-6 space-y-8">
         <div className="flex items-center justify-between animate-fade-in">
           <div>
@@ -676,7 +691,7 @@ const ConductTestOnline: React.FC = () => {
                       <div key={q.id} className="text-sm p-3 bg-muted/50 rounded flex justify-between items-center">
                         <div>
                           <div className="font-medium">
-                            <KatexRenderer>{q.text}</KatexRenderer> {/* Render LaTeX content */}
+                            <KatexRenderer>{q.text}</KatexRenderer>
                           </div>
                           <div className="text-muted-foreground">{q.type} • {q.marks} marks</div>
                         </div>
@@ -704,289 +719,263 @@ const ConductTestOnline: React.FC = () => {
           )}
         </div>
 
-        {isManageExamOpen && (
-          <Card className="glass-effect border-primary/20 animate-fade-in hover-lift">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Manage Exam
-              </CardTitle>
-              <Button variant="ghost" size="icon" onClick={toggleManageExam}>
-                <X className="h-5 w-5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="examSelect">Select Exam *</Label>
-                <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-                  <SelectTrigger id="examSelect">
-                    <SelectValue placeholder={exams.length ? 'Select an exam' : 'No exams available'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {exams.length ? (
-                      exams.map(exam => (
-                        exam.id && (
-                          <SelectItem key={exam.id} value={exam.id}>
-                            {exam.title} ({exam.status})
-                          </SelectItem>
-                        )
-                      )).filter(Boolean)
-                    ) : (
-                      <div className="text-sm text-muted-foreground p-2">No exams available</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                {!exams.length && <p className="text-sm text-destructive">No exams available</p>}
-              </div>
-
-              {selectedExamId && (
-                <>
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Assign to Group</h3>
-                    <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={groups.length ? 'Select a group' : 'No groups available'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {groups.length ? (
-                          groups.map(group => (
-                            group.id && (
-                              <SelectItem key={group.id} value={group.id}>
-                                {group.name || `Unnamed Group (${group.id})`}
-                              </SelectItem>
-                            )
-                          )).filter(Boolean)
-                        ) : (
-                          <div className="text-sm text-muted-foreground p-2">No groups available</div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      onClick={() => handleAssignGroup(selectedExamId, selectedGroup)}
-                      disabled={!selectedExamId || !selectedGroup}
-                      className="bg-green-600 hover:bg-green-700 w-32"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Assign
-                    </Button>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Security Settings</h3>
-                      <div className="space-y-3">
-                        {[
-                          { id: 'disableTabSwitching', label: 'Disable Tab Switching' },
-                          { id: 'disableRightClick', label: 'Disable Right Click' },
-                          { id: 'enableScreenSharing', label: 'Enable Screen Sharing' },
-                          { id: 'enableProctoring', label: 'Enable AI Proctoring' },
-                          { id: 'enableWebcam', label: 'Require Webcam Monitoring' },
-                          { id: 'restrictIP', label: 'Restrict IP Addresses' },
-                        ].map(setting => (
-                          <div key={setting.id} className="flex items-center justify-between">
-                            <Label htmlFor={setting.id}>{setting.label}</Label>
-                            <Switch
-                              id={setting.id}
-                              checked={securitySettings[setting.id as keyof SecuritySettings]}
-                              onCheckedChange={() => handleSecuritySettingChange(setting.id as keyof SecuritySettings)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <Button onClick={handleSaveSecuritySettings} className="w-full">
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Security Settings
-                      </Button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Time Limit</h3>
-                      <div className="space-y-2">
-                        <Label htmlFor="timeLimit">Select Time Limit (minutes)</Label>
-                        <Select value={timeLimit} onValueChange={value => {
-                          setTimeLimit(value);
-                          if (value !== 'custom') setCustomTimeLimit('');
-                        }}>
-                          <SelectTrigger id="timeLimit">
-                            <SelectValue placeholder="Select time limit" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {['30', '60', '90', '120', 'custom'].map(value => (
-                              <SelectItem key={value} value={value}>
-                                {value === 'custom' ? 'Custom' : `${value} minutes`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {timeLimit === 'custom' && (
-                        <div className="space-y-2">
-                          <Label htmlFor="customTimeLimit">Custom Time Limit (minutes)</Label>
-                          <Input
-                            id="customTimeLimit"
-                            type="number"
-                            value={customTimeLimit}
-                            onChange={e => setCustomTimeLimit(e.target.value)}
-                            placeholder="Enter custom time limit"
-                            min={5}
-                            max={240}
-                          />
-                        </div>
+        <div ref={manageExamRef}>
+          {isManageExamOpen && (
+            <Card className="glass-effect border-primary/20 animate-fade-in hover-lift">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Manage Exam
+                </CardTitle>
+                <Button variant="ghost" size="icon" onClick={toggleManageExam}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="examSelect">Select Exam *</Label>
+                  <Select value={selectedExamId} onValueChange={setSelectedExamId}>
+                    <SelectTrigger id="examSelect">
+                      <SelectValue placeholder={exams.length ? 'Select an exam' : 'No exams available'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {exams.length ? (
+                        exams.map(exam => (
+                          exam.id && (
+                            <SelectItem key={exam.id} value={exam.id}>
+                              {exam.title} ({exam.status})
+                            </SelectItem>
+                          )
+                        )).filter(Boolean)
+                      ) : (
+                        <div className="text-sm text-muted-foreground p-2">No exams available</div>
                       )}
-                      <Button onClick={handleSaveTimeLimit} className="w-full">
-                        <Clock className="h-4 w-4 mr-2" />
-                        Save Time Limit
+                    </SelectContent>
+                  </Select>
+                  {!exams.length && <p className="text-sm text-destructive">No exams available</p>}
+                </div>
+
+                {selectedExamId && (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Assign to Group</h3>
+                      <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={groups.length ? 'Select a group' : 'No groups available'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groups.length ? (
+                            groups.map(group => (
+                              group.id && (
+                                <SelectItem key={group.id} value={group.id}>
+                                  {group.name || `Unnamed Group (${group.id})`}
+                                </SelectItem>
+                              )
+                            )).filter(Boolean)
+                          ) : (
+                            <div className="text-sm text-muted-foreground p-2">No groups available</div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => handleAssignGroup(selectedExamId, selectedGroup)}
+                        disabled={!selectedExamId || !selectedGroup}
+                        className="bg-green-600 hover:bg-green-700 w-32"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Assign
                       </Button>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Edit Exam</h3>
-                    <Button
-                      onClick={() => setIsEditFormOpen(!isEditFormOpen)}
-                      className="w-full"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      {isEditFormOpen ? 'Close Edit Form' : 'Edit Exam'}
-                    </Button>
-                    {isEditFormOpen && (
-                      <form onSubmit={handleEditSubmit(handleEditExam)} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="editTestName">Test Name *</Label>
-                          <Input
-                            id="editTestName"
-                            placeholder="E.g., Mid-term Mathematics"
-                            className={cn(editErrors.testName && 'border-destructive')}
-                            {...registerEdit('testName')}
-                          />
-                          {editErrors.testName && <p className="text-sm text-destructive">{editErrors.testName.message}</p>}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="editDuration">Duration (minutes) *</Label>
-                            <div className="relative">
-                              <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                              <Input
-                                id="editDuration"
-                                type="number"
-                                placeholder="60"
-                                className={cn('pl-10', editErrors.duration && 'border-destructive')}
-                                {...registerEdit('duration')}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Security Settings</h3>
+                        <div className="space-y-3">
+                          {[
+                            { id: 'disableTabSwitching', label: 'Disable Tab Switching' },
+                            { id: 'disableRightClick', label: 'Disable Right Click' },
+                            { id: 'enableScreenSharing', label: 'Enable Screen Sharing' },
+                            { id: 'enableProctoring', label: 'Enable AI Proctoring' },
+                            { id: 'enableWebcam', label: 'Require Webcam Monitoring' },
+                            { id: 'restrictIP', label: 'Restrict IP Addresses' },
+                          ].map(setting => (
+                            <div key={setting.id} className="flex items-center justify-between">
+                              <Label htmlFor={setting.id}>{setting.label}</Label>
+                              <Switch
+                                id={setting.id}
+                                checked={securitySettings[setting.id as keyof SecuritySettings]}
+                                onCheckedChange={() => handleSecuritySettingChange(setting.id as keyof SecuritySettings)}
                               />
                             </div>
-                            {editErrors.duration && <p className="text-sm text-destructive">{editErrors.duration.message}</p>}
+                          ))}
+                        </div>
+                        <Button onClick={handleSaveSecuritySettings} className="w-full">
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Security Settings
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Time Limit</h3>
+                        <div className="space-y-2">
+                          <Label htmlFor="timeLimit">Select Time Limit (minutes)</Label>
+                          <Select value={timeLimit} onValueChange={value => {
+                            setTimeLimit(value);
+                            if (value !== 'custom') setCustomTimeLimit('');
+                          }}>
+                            <SelectTrigger id="timeLimit">
+                              <SelectValue placeholder="Select time limit" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['30', '60', '90', '120', 'custom'].map(value => (
+                                <SelectItem key={value} value={value}>
+                                  {value === 'custom' ? 'Custom' : `${value} minutes`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {timeLimit === 'custom' && (
+                          <div className="space-y-2">
+                            <Label htmlFor="customTimeLimit">Custom Time Limit (minutes)</Label>
+                            <Input
+                              id="customTimeLimit"
+                              type="number"
+                              value={customTimeLimit}
+                              onChange={e => setCustomTimeLimit(e.target.value)}
+                              placeholder="Enter custom time limit"
+                              min={5}
+                              max={240}
+                            />
+                          </div>
+                        )}
+                        <Button onClick={handleSaveTimeLimit} className="w-full">
+                          <Clock className="h-4 w-4 mr-2" />
+                          Save Time Limit
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Edit Exam</h3>
+                      <Button
+                        onClick={() => setIsEditFormOpen(!isEditFormOpen)}
+                        className="w-full"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        {isEditFormOpen ? 'Close Edit Form' : 'Edit Exam'}
+                      </Button>
+                      {isEditFormOpen && (
+                        <form onSubmit={handleEditSubmit(handleEditExam)} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="editTestName">Test Name *</Label>
+                            <Input
+                              id="editTestName"
+                              placeholder="E.g., Mid-term Mathematics"
+                              className={cn(editErrors.testName && 'border-destructive')}
+                              {...registerEdit('testName')}
+                            />
+                            {editErrors.testName && <p className="text-sm text-destructive">{editErrors.testName.message}</p>}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="editDuration">Duration (minutes) *</Label>
+                              <div className="relative">
+                                <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                  id="editDuration"
+                                  type="number"
+                                  placeholder="60"
+                                  className={cn('pl-10', editErrors.duration && 'border-destructive')}
+                                  {...registerEdit('duration')}
+                                />
+                              </div>
+                              {editErrors.duration && <p className="text-sm text-destructive">{editErrors.duration.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="editNumberOfSets">Number of Sets *</Label>
+                              <Input
+                                id="editNumberOfSets"
+                                type="number"
+                                placeholder="1"
+                                className={cn(editErrors.numberOfSets && 'border-destructive')}
+                                {...registerEdit('numberOfSets')}
+                              />
+                              {editErrors.numberOfSets && <p className="text-sm text-destructive">{editErrors.numberOfSets.message}</p>}
+                            </div>
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="editNumberOfSets">Number of Sets *</Label>
+                            <Label htmlFor="editNumberOfQuestionsPerSet">Questions per Set *</Label>
                             <Input
-                              id="editNumberOfSets"
+                              id="editNumberOfQuestionsPerSet"
                               type="number"
                               placeholder="1"
-                              className={cn(editErrors.numberOfSets && 'border-destructive')}
-                              {...registerEdit('numberOfSets')}
+                              className={cn(editErrors.numberOfQuestionsPerSet && 'border-destructive')}
+                              {...registerEdit('numberOfQuestionsPerSet')}
                             />
-                            {editErrors.numberOfSets && <p className="text-sm text-destructive">{editErrors.numberOfSets.message}</p>}
+                            {editErrors.numberOfQuestionsPerSet && <p className="text-sm text-destructive">{editErrors.numberOfQuestionsPerSet.message}</p>}
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="editNumberOfQuestionsPerSet">Questions per Set *</Label>
-                          <Input
-                            id="editNumberOfQuestionsPerSet"
-                            type="number"
-                            placeholder="1"
-                            className={cn(editErrors.numberOfQuestionsPerSet && 'border-destructive')}
-                            {...registerEdit('numberOfQuestionsPerSet')}
-                          />
-                          {editErrors.numberOfQuestionsPerSet && <p className="text-sm text-destructive">{editErrors.numberOfQuestionsPerSet.message}</p>}
-                        </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="editInstructions">Instructions (Optional)</Label>
+                            <Textarea
+                              id="editInstructions"
+                              rows={3}
+                              placeholder="Enter test instructions..."
+                              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground prioritize-visible:outline-none prioritize-visible:ring-2 prioritize-visible:ring-ring prioritize-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...registerEdit('instructions')}
+                            />
+                          </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="editInstructions">Instructions (Optional)</Label>
-                          <Textarea
-                            id="editInstructions"
-                            rows={3}
-                            placeholder="Enter test instructions..."
-                            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground prioritize-visible:outline-none prioritize-visible:ring-2 prioritize-visible:ring-ring prioritize-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...registerEdit('instructions')}
-                          />
-                        </div>
-
-                        <Button type="submit" className="w-full">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Exam Changes
-                        </Button>
-                      </form>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Schedule Exam</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="startTime">Start Time</Label>
-                        <Input
-                          id="startTime"
-                          type="datetime-local"
-                          value={schedule.startTime}
-                          onChange={e => setSchedule({ ...schedule, startTime: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endTime">End Time</Label>
-                        <Input
-                          id="endTime"
-                          type="datetime-local"
-                          value={schedule.endTime}
-                          onChange={e => setSchedule({ ...schedule, endTime: e.target.value })}
-                        />
-                      </div>
+                          <Button type="submit" className="w-full">
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Exam Changes
+                          </Button>
+                        </form>
+                      )}
                     </div>
-                    <Button onClick={handleScheduleExam} className="w-full">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Schedule Exam
-                    </Button>
-                  </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Preview Question Paper</h3>
-                    <Button onClick={toggleQuestionSets} className="w-full">
-                      <Eye className="h-4 w-4 mr-2" />
-                      {showQuestionSets ? 'Hide Question Sets' : 'Show Question Sets'}
-                    </Button>
-                    {showQuestionSets && (
-                      exams.find(exam => exam.id === selectedExamId)?.questionIds.length ? (
-                        Array.from({ length: exams.find(exam => exam.id === selectedExamId)?.numberOfSets || 1 }, (_, setIndex) => (
-                          <div key={setIndex} className="p-4 bg-muted/50 rounded">
-                            <h4 className="font-medium">Set {setIndex + 1}</h4>
-                            <ul className="mt-2 space-y-2">
-                              {exams.find(exam => exam.id === selectedExamId)?.questionIds
-                                .slice(0, exams.find(exam => exam.id === selectedExamId)?.numberOfQuestionsPerSet)
-                                .map((questionId, qIndex) => (
-                                  <li key={questionId} className="text-sm">
-                                    Question {qIndex + 1}: <KatexRenderer>{questions.find(q => q.id === questionId)?.text || `Question ${questionId}`}</KatexRenderer>
-                                    <span className="text-muted-foreground"> ({questions.find(q => q.id === questionId)?.type || 'MCQ'}, {questions.find(q => q.id === questionId)?.marks || 1} marks)</span>
-                                  </li>
-                                ))}
-                            </ul>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-destructive">No questions assigned to this exam</p>
-                      )
-                    )}
-                    <Button onClick={handlePreviewQuestionPaper} className="w-full">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview Full Question Paper
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                    <div ref={previewQuestionPaperRef} className="space-y-4">
+                      <h3 className="text-lg font-semibold">Preview Question Paper</h3>
+                      <Button onClick={toggleQuestionSets} className="w-full">
+                        <Eye className="h-4 w-4 mr-2" />
+                        {showQuestionSets ? 'Hide Question Sets' : 'Show Question Sets'}
+                      </Button>
+                      {showQuestionSets && (
+                        exams.find(exam => exam.id === selectedExamId)?.questionIds.length ? (
+                          Array.from({ length: exams.find(exam => exam.id === selectedExamId)?.numberOfSets || 1 }, (_, setIndex) => (
+                            <div key={setIndex} className="p-4 bg-muted/50 rounded">
+                              <h4 className="font-medium">Set {setIndex + 1}</h4>
+                              <ul className="mt-2 space-y-2">
+                                {exams.find(exam => exam.id === selectedExamId)?.questionIds
+                                  .slice(0, exams.find(exam => exam.id === selectedExamId)?.numberOfQuestionsPerSet)
+                                  .map((questionId, qIndex) => (
+                                    <li key={questionId} className="text-sm">
+                                      Question {qIndex + 1}: <KatexRenderer>{questions.find(q => q.id === questionId)?.text || `Question ${questionId}`}</KatexRenderer>
+                                      <span className="text-muted-foreground"> ({questions.find(q => q.id === questionId)?.type || 'MCQ'}, {questions.find(q => q.id === questionId)?.marks || 1} marks)</span>
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-destructive">No questions assigned to this exam</p>
+                        )
+                      )}
+                      <Button onClick={handlePreviewQuestionPaper} className="w-full">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview Full Question Paper
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {!isManageExamOpen && (
           <Button
@@ -1018,7 +1007,8 @@ const ConductTestOnline: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedExamId(test.id)}>View</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'view')}>View</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'manage')}>Manage</Button>
                     <Button variant="outline" size="sm">Monitor</Button>
                   </div>
                 </div>
