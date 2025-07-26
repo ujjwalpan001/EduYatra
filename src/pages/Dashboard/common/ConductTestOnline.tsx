@@ -188,9 +188,9 @@ const ConductTestOnline: React.FC = () => {
       setLoadingBanks(true);
       try {
         const [banksRes, groupsRes, examsRes] = await Promise.all([
-          fetchWithAuth('http://localhost:5000/api/exams/question-banks'),
-          fetchWithAuth('http://localhost:5000/api/exams/groups'),
-          fetchWithAuth('http://localhost:5000/api/exams/all'),
+          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/question-banks'),
+          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/groups'),
+          fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/all'),
         ]);
 
         const [banksData, groupsData, examsData] = await Promise.all([
@@ -250,7 +250,7 @@ const ConductTestOnline: React.FC = () => {
     const fetchQuestions = async () => {
       setLoadingQuestions(true);
       try {
-        const res = await fetchWithAuth(`http://localhost:5000/api/exams/questions?questionBankId=${questionBankId}`);
+        const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/questions?questionBankId=${questionBankId}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to fetch questions');
         setQuestions(data.questions?.map((q: any) => ({
@@ -303,7 +303,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}/security`, {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}/security`, {
         method: 'PATCH',
         body: JSON.stringify(securitySettings),
       });
@@ -325,7 +325,7 @@ const ConductTestOnline: React.FC = () => {
     }
     try {
       console.log(`Assigning exam ${examId} to group ${groupId}`);
-      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${examId}/assign-group`, {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/assign-group`, {
         method: 'POST',
         body: JSON.stringify({ groupId }),
       });
@@ -356,7 +356,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}`, {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}`, {
         method: 'PATCH',
         body: JSON.stringify({ duration_minutes: duration }),
       });
@@ -379,7 +379,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}`, {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}`, {
         method: 'PATCH',
         body: JSON.stringify({
           title: data.testName,
@@ -416,7 +416,7 @@ const ConductTestOnline: React.FC = () => {
       return;
     }
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/exams/${selectedExamId}/schedule`, {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${selectedExamId}/schedule`, {
         method: 'PATCH',
         body: JSON.stringify(schedule),
       });
@@ -494,7 +494,7 @@ const ConductTestOnline: React.FC = () => {
     };
 
     try {
-      const res = await fetchWithAuth('http://localhost:5000/api/exams/create', {
+      const res = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/create', {
         method: 'POST',
         body: JSON.stringify(examData),
       });
