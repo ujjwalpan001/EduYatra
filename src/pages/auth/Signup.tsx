@@ -113,7 +113,7 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post<SignupResponse>("http://localhost:5000/api/users/signup", formData);
+      const response = await axios.post<SignupResponse>("https://eduyatrabackend.onrender.com/api/users/signup", formData);
       const { token, role } = response.data;
 
       const decoded: any = jwtDecode(token);

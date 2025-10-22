@@ -103,7 +103,7 @@ const Enrollment: React.FC = () => {
     const fetchExams = async () => {
       setLoading(true);
       try {
-        const response = await fetchWithAuth('http://localhost:5000/api/exams/assigned');
+        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/assigned');
         const data = await response.json();
         console.log('Assigned exams response:', data);
 
@@ -157,7 +157,7 @@ const Enrollment: React.FC = () => {
       setLoadingAttended(true);
       try {
         console.log('🔍 Fetching attended tests from backend...');
-        const response = await fetchWithAuth('http://localhost:5000/api/exams/attended-tests');
+        const response = await fetchWithAuth('http://eduyatrabackend.onrender.com/api/exams/attended-tests');
         const data = await response.json();
         console.log('📥 Attended tests RAW response:', data);
         console.log('📊 Response status:', response.status, response.ok);

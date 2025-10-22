@@ -113,7 +113,7 @@ const ReviewQuestionSets = () => {
           return;
         }
 
-        const res = await axios.get<QuestionBankResponse>('http://localhost:5000/api/question-banks/all', {
+        const res = await axios.get<QuestionBankResponse>('https://eduyatrabackend.onrender.com/api/question-banks/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -122,7 +122,7 @@ const ReviewQuestionSets = () => {
             res.data.data.map(async (bank) => {
               try {
                 const questionsRes = await axios.get<QuestionsResponse>(
-                  `http://localhost:5000/api/question-banks/questions?questionBankId=${bank._id}`,
+                  `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -190,7 +190,7 @@ const ReviewQuestionSets = () => {
       }
 
       const res = await axios.post<CreateQuestionBankResponse>(
-        'http://localhost:5000/api/question-banks/create',
+        'https://eduyatrabackend.onrender.com/api/question-banks/create',
         newBank,
         { headers: { Authorization: `Bearer ${token}` } }
       );

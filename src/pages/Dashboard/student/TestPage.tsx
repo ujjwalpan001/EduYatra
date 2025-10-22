@@ -134,7 +134,7 @@ const TestPage: React.FC = () => {
       }
       setIsLoadingQuestions(true);
       try {
-        const response = await fetchWithAuth(`http://localhost:5000/api/exams/${examId}/questions`, {
+        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/questions`, {
           method: 'GET',
         });
         const data = await response.json();
@@ -312,8 +312,7 @@ const TestPage: React.FC = () => {
 
   const handleSubmit = async (reason: string = "Manual submission") => {
     setIsTestActive(false);
-    const timeSpentSeconds = initialTime - timeLeft;
-    let calculatedScore = 0;
+    let score = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correctAnswer) {
         calculatedScore += (maxMarks || 100) / questions.length;
@@ -321,7 +320,7 @@ const TestPage: React.FC = () => {
     });
     setScore(calculatedScore);
     try {
-      const response = await fetchWithAuth('http://localhost:5000/api/exams/submit-test', {
+      const response = await fetchWithAuth('http://eduyatrabackend.onrender.com/api/submit-test', {
         method: 'POST',
         body: JSON.stringify({
           examId,

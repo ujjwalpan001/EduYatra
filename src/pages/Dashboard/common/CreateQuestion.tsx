@@ -12,9 +12,10 @@ import 'katex/dist/katex.min.css';
 import { renderKatex, KatexRenderer } from '@/lib/katex-rendering';
 import ReactDOMServer from 'react-dom/server';
 import { toast } from "sonner";
-import { jwtDecode } from 'jwt-decode'; // Add this dependency
+import { jwtDecode } from 'jwt-decode';
 
 const subjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
+const questionSubjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
 const questionTypes = ["MCQ", "True/False", "Fill in the Blanks", "Short Answer"];
 const difficultyLevels = ["Easy", "Medium", "Hard"];
 
@@ -81,19 +82,19 @@ const CreateQuestion = () => {
       try {
         const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-        const qbResponse = await fetch("http://localhost:5000/api/questions/questionBanks", { headers });
+        const qbResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/questionBanks", { headers });
         const qbResult = await qbResponse.json();
         if (qbResponse.ok) {
           setQuestionBanks(qbResult.questionBanks.map((qb: any) => qb.name));
         }
 
-        const courseResponse = await fetch("http://localhost:5000/api/questions/courses", { headers });
+        const courseResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/courses", { headers });
         const courseResult = await courseResponse.json();
         if (courseResponse.ok) {
           setCourses(courseResult.courses.map((course: any) => course.course_code));
         }
 
-        const instituteResponse = await fetch("http://localhost:5000/api/questions/institutes", { headers });
+        const instituteResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/institutes", { headers });
         const instituteResult = await instituteResponse.json();
         if (instituteResponse.ok) {
           setInstitutes(instituteResult.institutes.map((institute: any) => institute.name));
@@ -219,7 +220,7 @@ const CreateQuestion = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch("http://localhost:5000/api/questions", {
+      const response = await fetch("https://eduyatrabackend.onrender.com/api/questions", {
         method: "POST",
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -235,24 +236,38 @@ const CreateQuestion = () => {
         console.log(result);
         const refreshData = async () => {
           const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-          const qbResponse = await fetch("http://localhost:5000/api/questions/questionBanks", { headers });
+          const qbResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/questionBanks", { headers });
           if (qbResponse.ok) {
             const qbResult = await qbResponse.json();
             setQuestionBanks(qbResult.questionBanks.map((qb: any) => qb.name));
           }
-          const courseResponse = await fetch("http://localhost:5000/api/questions/courses", { headers });
+          const courseResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/courses", { headers });
           if (courseResponse.ok) {
             const courseResult = await courseResponse.json();
             setCourses(courseResult.courses.map((course: any) => course.course_code));
           }
-          const instituteResponse = await fetch("http://localhost:5000/api/questions/institutes", { headers });
+          const instituteResponse = await fetch("https://eduyatrabackend.onrender.com/api/questions/institutes", { headers });
           if (instituteResponse.ok) {
             const instituteResult = await instituteResponse.json();
             setInstitutes(instituteResult.institutes.map((institute: any) => institute.name));
           }
         };
         await refreshData();
-        setFormData(prev => ({ ...prev, questionBankName: '', courseCode: '', instituteName: '' }));
+        // Reset only specific Question Details fields, preserving subject and topic
+        setFormData(prev => ({
+          ...prev,
+          question: '',
+          difficulty: 'Medium',
+          correctOption: '',
+          incorrectOptions: ['', '', ''],
+          image: null,
+          solution: '',
+          questionType: 'MCQ'
+        }));
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } else {
         toast.error(`❌ Failed to save question: ${result.error || result.message || 'Unknown error'}`);
       }

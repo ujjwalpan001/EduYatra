@@ -100,21 +100,21 @@ export function StudentBatchList() {
 
         // Fetch institutes
         const institutesResponse = await axios.get<InstituteResponse>(
-          "/api/exams/institutes",
+          "https://eduyatrabackend.onrender.com/api/exams/institutes",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setInstitutes(institutesResponse.data.institutes);
 
         // Fetch courses
         const coursesResponse = await axios.get<CourseResponse>(
-          "/api/exams/courses",
+          "https://eduyatrabackend.onrender.com/api/exams/courses",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCourses(coursesResponse.data.courses);
 
         // Fetch classes
         const classesResponse = await axios.get<ClassesResponse>(
-          "/api/classes",
+          "https://eduyatrabackend.onrender.com/api/classes",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const classes = classesResponse.data.classes.map((cls) => ({
@@ -187,7 +187,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `/api/classes/${batchId}/students/${studentId}`,
+        `https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`,
         { isSelected: selected },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -378,7 +378,7 @@ export function StudentBatchList() {
       } else {
         // Create new batch
         const response = await axios.post<ClassResponse>(
-          "/api/classes/create",
+          "https://eduyatrabackend.onrender.com/api/classes/create",
           {
             class_name: batchName,
             invitation_code: invitationCode,
@@ -464,7 +464,7 @@ export function StudentBatchList() {
       }
 
       const response = await axios.post(
-        `/api/classes/${editingBatchId}/students`,
+        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students`,
         { students },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -541,7 +541,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `/api/classes/${editingBatchId}/students/${editingStudent.id}`,
+        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students/${editingStudent.id}`,
         {
           name: newStudentName.trim(),
           email: newStudentEmail.trim(),
@@ -603,7 +603,7 @@ export function StudentBatchList() {
         return;
       }
 
-      await axios.delete(`/api/classes/${batchId}/students/${studentId}`, {
+      await axios.delete(`https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

@@ -82,7 +82,7 @@ function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setPro
       if (!token) throw new Error("No token found");
 
       const response = await axios.put<UpdateProfileResponse>(
-        "http://localhost:5000/api/users/profile",
+        "https://eduyatrabackend.onrender.com/api/users/profile",
         {
           fullName: editForm.name,
           email: editForm.email,
