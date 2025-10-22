@@ -64,7 +64,7 @@ const MyPerformance = () => {
     const fetchPerformance = async () => {
       try {
         console.log('🔄 Fetching student performance data...');
-        const response = await fetchWithAuth('http://eduyatrabackend.onrender.com/api/exams/student-performance');
+        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/student-performance');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

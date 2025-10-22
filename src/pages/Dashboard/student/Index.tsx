@@ -59,7 +59,7 @@ const Index = () => {
   useEffect(() => {
     const fetchPerformance = async () => {
       try {
-        const response = await fetchWithAuth('http://eduyatrabackend.onrender.com/api/exams/student-performance');
+        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/student-performance');
         const data = await response.json();
         
         if (data.success && data.performance) {
