@@ -100,24 +100,23 @@ export function StudentBatchList() {
 
         // Fetch institutes
         const institutesResponse = await axios.get<InstituteResponse>(
-          "http://localhost:5000/api/exams/institutes",
+          "https://eduyatrabackend.onrender.com/api/exams/institutes",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setInstitutes(institutesResponse.data.institutes);
 
         // Fetch courses
         const coursesResponse = await axios.get<CourseResponse>(
-          "http://localhost:5000/api/exams/courses",
+          "https://eduyatrabackend.onrender.com/api/exams/courses",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCourses(coursesResponse.data.courses);
 
         // Fetch classes
         const classesResponse = await axios.get<ClassesResponse>(
-          "http://localhost:5000/api/classes",
+          "https://eduyatrabackend.onrender.com/api/classes",
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log('📚 Fetched classes:', classesResponse.data.classes);
         const classes = classesResponse.data.classes.map((cls) => ({
           id: cls._id,
           name: cls.class_name,
@@ -131,10 +130,8 @@ export function StudentBatchList() {
           })),
           isExpanded: false,
         }));
-        console.log('📋 Mapped batches:', classes);
         setBatches(classes);
       } catch (error: any) {
-        console.error('❌ Error fetching data:', error);
         toast({
           title: "Error",
           description: error.response?.data?.error || "Failed to fetch data.",
@@ -190,7 +187,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `http://localhost:5000/api/classes/${batchId}/students/${studentId}`,
+        `https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`,
         { isSelected: selected },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -381,7 +378,7 @@ export function StudentBatchList() {
       } else {
         // Create new batch
         const response = await axios.post<ClassResponse>(
-          "http://localhost:5000/api/classes/create",
+          "https://eduyatrabackend.onrender.com/api/classes/create",
           {
             class_name: batchName,
             invitation_code: invitationCode,
@@ -467,7 +464,7 @@ export function StudentBatchList() {
       }
 
       const response = await axios.post(
-        `http://localhost:5000/api/classes/${editingBatchId}/students`,
+        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students`,
         { students },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -544,7 +541,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `http://localhost:5000/api/classes/${editingBatchId}/students/${editingStudent.id}`,
+        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students/${editingStudent.id}`,
         {
           name: newStudentName.trim(),
           email: newStudentEmail.trim(),
@@ -595,8 +592,6 @@ export function StudentBatchList() {
 
   // Remove student
   const removeStudent = async (batchId: string, studentId: string) => {
-    console.log('🗑️ Attempting to remove student:', { batchId, studentId });
-    
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -608,14 +603,9 @@ export function StudentBatchList() {
         return;
       }
 
-      const url = `http://localhost:5000/api/classes/${batchId}/students/${studentId}`;
-      console.log('📡 DELETE request to:', url);
-
-      const response = await axios.delete(url, {
+      await axios.delete(`https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      console.log('✅ Delete response:', response.data);
 
       setBatches(prevBatches =>
         prevBatches.map(batch =>
@@ -630,55 +620,12 @@ export function StudentBatchList() {
 
       toast({
         title: "Student removed",
-        description: "Student removed from batch successfully",
+        description: "Student removed from batch",
       });
     } catch (error: any) {
-      console.error("❌ Error removing student:", error);
-      console.error("Error details:", error.response?.data);
       toast({
         title: "Error",
-        description: error.response?.data?.error || error.message || "Failed to remove student.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Delete entire batch
-  const deleteBatch = async (batchId: string) => {
-    console.log('🗑️ Attempting to delete batch:', batchId);
-    
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "Please log in to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const url = `http://localhost:5000/api/classes/${batchId}`;
-      console.log('📡 DELETE request to:', url);
-
-      const response = await axios.delete(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log('✅ Delete response:', response.data);
-
-      setBatches(prevBatches => prevBatches.filter(batch => batch.id !== batchId));
-
-      toast({
-        title: "Batch deleted",
-        description: response.data.message || "Batch and all students removed successfully",
-      });
-    } catch (error: any) {
-      console.error("❌ Error deleting batch:", error);
-      console.error("Error details:", error.response?.data);
-      toast({
-        title: "Error",
-        description: error.response?.data?.error || error.message || "Failed to delete batch.",
+        description: error.response?.data?.error || "Failed to remove student.",
         variant: "destructive",
       });
     }
@@ -758,7 +705,6 @@ export function StudentBatchList() {
                   onSelectStudent={(studentId, selected) => handleSelectStudent(studentId, selected, batch.id)}
                   onViewAll={handleViewAll}
                   onRemoveStudent={removeStudent}
-                  onDeleteBatch={deleteBatch}
                 />
               )}
             </div>
