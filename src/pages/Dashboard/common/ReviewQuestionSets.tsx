@@ -3,12 +3,15 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Search, Edit, Trash2, Eye, Filter, Lock, Globe, Users, Save, X } from "lucide-react";
 import { toast } from 'sonner';
 import axios from "axios";
+import { KatexRenderer } from "@/lib/katex-rendering";
+import 'katex/dist/katex.min.css';
 
 // Utility to format dates as "X days ago"
 const formatRelativeTime = (date: string | Date): string => {
@@ -36,10 +39,17 @@ interface QuestionBank {
 
 interface Question {
   _id: string;
-  text: string;
+  latex_code: string;
+  katex_code: string;
   difficulty_rating: number;
   subject: string;
-  options?: string[];
+  question_type: string;
+  correct_option_latex?: string;
+  correct_option_katex?: string;
+  incorrect_option_latex?: string[];
+  incorrect_option_katex?: string[];
+  topic?: string;
+  Sub_topic?: string;
 }
 
 interface QuestionBankResponse {
@@ -60,6 +70,12 @@ interface QuestionsResponse {
   error?: string;
 }
 
+interface UpdateQuestionResponse {
+  success: boolean;
+  question?: Question;
+  error?: string;
+}
+
 const ReviewQuestionSets = () => {
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,38 +87,8 @@ const ReviewQuestionSets = () => {
   const [questionSearchQuery, setQuestionSearchQuery] = useState("");
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editedQuestion, setEditedQuestion] = useState<Question | null>(null);
-
-  // Mock questions for preview (example questions)
-  const [mockQuestions, setMockQuestions] = useState<Question[]>([
-    {
-      _id: "q1",
-      text: "What is the primary source of energy for Earth's climate system?",
-      difficulty_rating: 1,
-      subject: "Environmental Science",
-      options: ["Sun", "Geothermal", "Wind", "Ocean currents"],
-    },
-    {
-      _id: "q2",
-      text: "Which gas is most abundant in Earth's atmosphere?",
-      difficulty_rating: 2,
-      subject: "Atmospheric Science",
-      options: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Argon"],
-    },
-    {
-      _id: "q3",
-      text: "What is the main cause of ozone depletion?",
-      difficulty_rating: 3,
-      subject: "Environmental Science",
-      options: ["CFCs", "CO2", "Methane", "Nitrous Oxide"],
-    },
-    {
-      _id: "q4",
-      text: "Which layer of the atmosphere contains the ozone layer?",
-      difficulty_rating: 2,
-      subject: "Atmospheric Science",
-      options: ["Troposphere", "Stratosphere", "Mesosphere", "Thermosphere"],
-    },
-  ]);
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
   useEffect(() => {
     const fetchQuestionBanks = async () => {
@@ -113,7 +99,7 @@ const ReviewQuestionSets = () => {
           return;
         }
 
-        const res = await axios.get<QuestionBankResponse>('https://eduyatrabackend.onrender.com/api/question-banks/all', {
+        const res = await axios.get<QuestionBankResponse>('http://localhost:5000/api/question-banks/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -122,7 +108,7 @@ const ReviewQuestionSets = () => {
             res.data.data.map(async (bank) => {
               try {
                 const questionsRes = await axios.get<QuestionsResponse>(
-                  `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
+                  `http://localhost:5000/api/question-banks/questions?questionBankId=${bank._id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -165,9 +151,10 @@ const ReviewQuestionSets = () => {
         } else {
           toast.error(`❌ Failed to fetch question banks: ${res.data.error || 'Unknown error'}`);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching question banks:', error);
-        toast.error(error.response?.data?.error || "⚠️ Error fetching question banks");
+        const axiosError = error as { response?: { data?: { error?: string } } };
+        toast.error(axiosError.response?.data?.error || "⚠️ Error fetching question banks");
       } finally {
         setLoading(false);
       }
@@ -216,33 +203,118 @@ const ReviewQuestionSets = () => {
       } else {
         toast.error(`❌ Failed to create question bank: ${res.data.error || 'Unknown error'}`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating question bank:", error);
-      toast.error(error.response?.data?.error || "⚠️ Failed to create question bank");
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      toast.error(axiosError.response?.data?.error || "⚠️ Failed to create question bank");
     }
   };
 
-  const handlePreview = (bank: QuestionBank) => {
+  const handlePreview = async (bank: QuestionBank) => {
     setSelectedBank(bank);
     setIsPreviewOpen(true);
+    setLoadingQuestions(true);
+    
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("❌ Please log in to view questions");
+        return;
+      }
+
+      console.log('🔍 Fetching questions for bank:', bank._id);
+      const response = await axios.get<QuestionsResponse>(
+        `http://localhost:5000/api/question-banks/questions?questionBankId=${bank._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('📥 Questions response:', response.data);
+
+      if (response.data.success && response.data.questions) {
+        console.log('✅ Setting preview questions:', response.data.questions);
+        console.log('📊 Number of questions:', response.data.questions.length);
+        
+        // Log first question details for debugging
+        if (response.data.questions.length > 0) {
+          const firstQ = response.data.questions[0];
+          console.log('🔍 First question details:', {
+            id: firstQ._id,
+            hasKatexCode: !!firstQ.katex_code,
+            hasLatexCode: !!firstQ.latex_code,
+            katexCodeLength: firstQ.katex_code?.length || 0,
+            latexCodeLength: firstQ.latex_code?.length || 0,
+            katexCodePreview: firstQ.katex_code?.substring(0, 100),
+            latexCodePreview: firstQ.latex_code?.substring(0, 50),
+            subject: firstQ.subject,
+            questionType: firstQ.question_type,
+            correctOption: !!firstQ.correct_option_katex,
+            incorrectOptions: firstQ.incorrect_option_katex?.length || 0
+          });
+        }
+        
+        setPreviewQuestions(response.data.questions);
+        console.log(`✅ Loaded ${response.data.questions.length} questions`);
+        
+        if (response.data.questions.length === 0) {
+          toast.info("ℹ️ This question bank has no questions yet");
+        }
+      } else {
+        setPreviewQuestions([]);
+        toast.warning("⚠️ No questions found in this question bank");
+      }
+    } catch (error: unknown) {
+      console.error('❌ Error fetching questions:', error);
+      toast.error("⚠️ Failed to load questions");
+      setPreviewQuestions([]);
+    } finally {
+      setLoadingQuestions(false);
+    }
   };
 
   const handleEditQuestion = (question: Question) => {
     setEditingQuestionId(question._id);
-    setEditedQuestion({ ...question, options: question.options ? [...question.options] : [] });
+    setEditedQuestion({ 
+      ...question, 
+      incorrect_option_katex: question.incorrect_option_katex ? [...question.incorrect_option_katex] : [] 
+    });
   };
 
-  const handleSaveQuestion = (questionId: string) => {
+  const handleSaveQuestion = async (questionId: string) => {
     if (!editedQuestion) return;
 
-    setMockQuestions((prev) =>
-      prev.map((q) =>
-        q._id === questionId ? { ...editedQuestion } : q
-      )
-    );
-    setEditingQuestionId(null);
-    setEditedQuestion(null);
-    toast.success("✅ Question updated successfully!");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("❌ Please log in to save changes");
+        return;
+      }
+
+      console.log('💾 Saving question:', questionId, editedQuestion);
+
+      // Update the question via API
+      const response = await axios.put<UpdateQuestionResponse>(
+        `http://localhost:5000/api/questions/${questionId}`,
+        editedQuestion,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        // Update local state
+        setPreviewQuestions((prev) =>
+          prev.map((q) =>
+            q._id === questionId ? { ...editedQuestion } : q
+          )
+        );
+        setEditingQuestionId(null);
+        setEditedQuestion(null);
+        toast.success("✅ Question updated successfully!");
+      } else {
+        toast.error("❌ Failed to update question");
+      }
+    } catch (error: unknown) {
+      console.error('❌ Error saving question:', error);
+      toast.error("⚠️ Failed to save question changes");
+    }
   };
 
   const handleCancelEdit = () => {
@@ -252,9 +324,9 @@ const ReviewQuestionSets = () => {
 
   const handleOptionChange = (index: number, value: string) => {
     if (!editedQuestion) return;
-    const newOptions = [...(editedQuestion.options || [])];
+    const newOptions = [...(editedQuestion.incorrect_option_katex || [])];
     newOptions[index] = value;
-    setEditedQuestion({ ...editedQuestion, options: newOptions });
+    setEditedQuestion({ ...editedQuestion, incorrect_option_katex: newOptions });
   };
 
   // Filter question banks based on search query
@@ -265,11 +337,24 @@ const ReviewQuestionSets = () => {
   );
 
   // Filter questions based on question search query
-  const filteredQuestions = mockQuestions.filter(
+  const filteredQuestions = previewQuestions.filter(
     (question) =>
-      question.text.toLowerCase().includes(questionSearchQuery.toLowerCase()) ||
-      question.subject.toLowerCase().includes(questionSearchQuery.toLowerCase())
+      (question.katex_code && question.katex_code.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
+      (question.subject && question.subject.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
+      (question.topic && question.topic.toLowerCase().includes(questionSearchQuery.toLowerCase()))
   );
+  
+  // Log filtered questions
+  console.log('🔍 Preview Dialog - filteredQuestions:', filteredQuestions.length, 'questions');
+  if (filteredQuestions.length > 0) {
+    console.log('📊 First filtered question:', {
+      id: filteredQuestions[0]._id,
+      hasKatex: !!filteredQuestions[0].katex_code,
+      hasLatex: !!filteredQuestions[0].latex_code,
+      katexLength: filteredQuestions[0].katex_code?.length,
+      latexLength: filteredQuestions[0].latex_code?.length
+    });
+  }
 
   return (
     <Layout>
@@ -464,26 +549,59 @@ const ReviewQuestionSets = () => {
                 </Button>
               </div>
               {/* Questions List */}
-              <div className="max-h-[500px] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
-                  {filteredQuestions.length === 0 ? (
-                    <p className="text-destructive col-span-2">No questions found.</p>
-                  ) : (
-                    filteredQuestions.map((question, index) => (
-                      <Card key={question._id} className="glass-effect border-primary/20">
+              <div className="max-h-[600px] overflow-y-auto pr-2">
+                {loadingQuestions ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Loading questions...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredQuestions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">No questions found.</p>
+                        <p className="text-sm text-muted-foreground mt-2">Try adjusting your search or add questions to this bank.</p>
+                      </div>
+                    ) : (
+                    filteredQuestions.map((question, index) => {
+                      console.log(`🎯 Mapping question ${index + 1}:`, question._id, 'has katex:', !!question.katex_code, 'has latex:', !!question.latex_code);
+                      return (
+                      <Card key={question._id} className="glass-effect border-primary/20 hover:border-primary/40 transition-all">
                         <CardContent className="p-4">
+                          {/* Question Number Badge */}
+                          <div className="flex items-center justify-between mb-3">
+                            <Badge variant="outline" className="text-xs">
+                              Question #{index + 1}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {question.question_type || 'Multiple Choice'}
+                            </Badge>
+                          </div>
+                          
                           {editingQuestionId === question._id ? (
                             <div className="space-y-4">
                               <div className="space-y-2">
-                                <Label htmlFor={`text-${question._id}`}>Question Text</Label>
-                                <Input
-                                  id={`text-${question._id}`}
-                                  value={editedQuestion?.text || ''}
+                                <Label htmlFor={`katex-${question._id}`}>Question Text (KaTeX/LaTeX)</Label>
+                                <Textarea
+                                  id={`katex-${question._id}`}
+                                  value={editedQuestion?.katex_code || ''}
                                   onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, text: e.target.value })
+                                    setEditedQuestion({ ...editedQuestion!, katex_code: e.target.value })
                                   }
-                                  placeholder="Enter question text"
+                                  placeholder="Enter question in KaTeX/LaTeX format"
+                                  rows={4}
+                                  className="font-mono text-sm"
                                 />
+                                {/* Live Preview */}
+                                {editedQuestion?.katex_code && (
+                                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Preview:</p>
+                                    <div className="text-sm">
+                                      <KatexRenderer isRawLatex={true}>
+                                        {editedQuestion.katex_code}
+                                      </KatexRenderer>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor={`subject-${question._id}`}>Subject</Label>
@@ -494,6 +612,17 @@ const ReviewQuestionSets = () => {
                                     setEditedQuestion({ ...editedQuestion!, subject: e.target.value })
                                   }
                                   placeholder="Enter subject"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`topic-${question._id}`}>Topic</Label>
+                                <Input
+                                  id={`topic-${question._id}`}
+                                  value={editedQuestion?.topic || ''}
+                                  onChange={(e) =>
+                                    setEditedQuestion({ ...editedQuestion!, topic: e.target.value })
+                                  }
+                                  placeholder="Enter topic"
                                 />
                               </div>
                               <div className="space-y-2">
@@ -513,15 +642,52 @@ const ReviewQuestionSets = () => {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <Label>Options</Label>
-                                {editedQuestion?.options?.map((option, idx) => (
-                                  <Input
-                                    key={idx}
-                                    value={option}
-                                    onChange={(e) => handleOptionChange(idx, e.target.value)}
-                                    placeholder={`Option ${idx + 1}`}
-                                    className="mb-2"
-                                  />
+                                <Label htmlFor={`correct-${question._id}`}>Correct Answer (KaTeX/LaTeX)</Label>
+                                <Textarea
+                                  id={`correct-${question._id}`}
+                                  value={editedQuestion?.correct_option_katex || ''}
+                                  onChange={(e) =>
+                                    setEditedQuestion({ ...editedQuestion!, correct_option_katex: e.target.value })
+                                  }
+                                  placeholder="Enter correct answer in KaTeX/LaTeX format"
+                                  rows={2}
+                                  className="font-mono text-sm"
+                                />
+                                {/* Preview */}
+                                {editedQuestion?.correct_option_katex && (
+                                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                                    <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Preview:</p>
+                                    <div className="text-sm">
+                                      <KatexRenderer isRawLatex={true}>
+                                        {editedQuestion.correct_option_katex}
+                                      </KatexRenderer>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Incorrect Options (KaTeX/LaTeX)</Label>
+                                {editedQuestion?.incorrect_option_katex?.map((option, idx) => (
+                                  <div key={idx} className="space-y-2">
+                                    <Textarea
+                                      value={option}
+                                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                      placeholder={`Incorrect option ${idx + 1}`}
+                                      rows={2}
+                                      className="font-mono text-sm"
+                                    />
+                                    {/* Preview */}
+                                    {option && (
+                                      <div className="p-2 bg-gray-50 dark:bg-gray-900/20 rounded border border-gray-200 dark:border-gray-800">
+                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
+                                        <div className="text-sm">
+                                          <KatexRenderer isRawLatex={true}>
+                                            {option}
+                                          </KatexRenderer>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 ))}
                               </div>
                               <div className="flex justify-end gap-2">
@@ -543,35 +709,116 @@ const ReviewQuestionSets = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-start">
-                                <p className="font-medium">{question.text}</p>
+                            <div className="space-y-3">
+                              {/* Question Text - Make it prominent */}
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1">
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">QUESTION:</p>
+                                    <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                                      {/* katex_code contains pre-rendered HTML, render it directly */}
+                                      {question.katex_code ? (
+                                        <>
+                                          {console.log('🎨 Rendering katex_code HTML for question:', question._id, 'Length:', question.katex_code.length, 'Preview:', question.katex_code.substring(0, 100))}
+                                          <div dangerouslySetInnerHTML={{ __html: question.katex_code }} />
+                                        </>
+                                      ) : question.latex_code ? (
+                                        <>
+                                          {console.log('🎨 Rendering latex_code through KatexRenderer for question:', question._id, 'Content:', question.latex_code)}
+                                          <KatexRenderer isRawLatex={true}>
+                                            {question.latex_code}
+                                          </KatexRenderer>
+                                        </>
+                                      ) : (
+                                        <>
+                                          {console.log('❌ No question content for:', question._id)}
+                                          <span className="italic text-gray-500">No question text available</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {question.topic && (
+                                    <p className="text-xs text-muted-foreground mt-2">📚 Topic: {question.topic}</p>
+                                  )}
+                                  {question.Sub_topic && (
+                                    <p className="text-xs text-muted-foreground">📖 Sub-topic: {question.Sub_topic}</p>
+                                  )}
+                                </div>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleEditQuestion(question)}
+                                  className="flex-shrink-0"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </div>
-                              <p className="text-sm text-muted-foreground">Subject: {question.subject}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Difficulty: {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
-                              </p>
-                              {question.options && (
-                                <ul className="list-disc pl-5 text-sm">
-                                  {question.options.map((option, idx) => (
-                                    <li key={idx}>{option}</li>
-                                  ))}
-                                </ul>
+                              
+                              {/* Metadata */}
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                {question.subject && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-muted-foreground">Subject:</span>
+                                    <span className="font-medium">{question.subject}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">Difficulty:</span>
+                                  <Badge variant={question.difficulty_rating >= 3 ? 'destructive' : question.difficulty_rating >= 2 ? 'default' : 'secondary'}>
+                                    {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
+                                  </Badge>
+                                </div>
+                                {question.question_type && (
+                                  <div className="flex items-center gap-1 col-span-2">
+                                    <span className="text-muted-foreground">Type:</span>
+                                    <span className="font-medium">{question.question_type}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Correct Answer */}
+                              {(question.correct_option_katex || question.correct_option_latex) && (
+                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                                  <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">✓ Correct Answer:</p>
+                                  <div className="text-sm text-green-900 dark:text-green-100">
+                                    {/* correct_option_katex contains pre-rendered HTML */}
+                                    {question.correct_option_katex ? (
+                                      <div dangerouslySetInnerHTML={{ __html: question.correct_option_katex }} />
+                                    ) : question.correct_option_latex ? (
+                                      <KatexRenderer isRawLatex={true}>
+                                        {question.correct_option_latex}
+                                      </KatexRenderer>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Incorrect Options */}
+                              {question.incorrect_option_katex && question.incorrect_option_katex.length > 0 && (
+                                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                                  <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-2">✗ Incorrect Options:</p>
+                                  <ul className="space-y-2">
+                                    {question.incorrect_option_katex.map((option, idx) => (
+                                      <li key={idx} className="text-sm text-red-900 dark:text-red-100 flex items-start gap-2">
+                                        <span className="text-red-500 mt-1">•</span>
+                                        <div className="flex-1">
+                                          {/* Pre-rendered HTML from database */}
+                                          <div dangerouslySetInnerHTML={{ __html: option }} />
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
                               )}
                             </div>
                           )}
                         </CardContent>
                       </Card>
-                    ))
+                    );
+                    })
                   )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </DialogContent>
