@@ -10,8 +10,81 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Play, Award, Clock, Users, Upload, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+
+// Types
+interface RecentScore {
+  examTitle: string;
+  score: number;
+  date: string;
+  submittedAt: string;
+}
+
+interface Performance {
+  testsAttempted: number;
+  averageScore: number;
+  bestScore: number;
+  totalTimeSpent: number;
+  recentScores: RecentScore[];
+}
+
+// Utility function for authenticated API calls
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
+};
 
 const Index = () => {
+  const [performance, setPerformance] = useState({
+    testsAttempted: 0,
+    averageScore: 0,
+    bestScore: 0,
+    totalTimeSpent: 0,
+    recentScores: []
+  });
+  const [loadingPerformance, setLoadingPerformance] = useState(true);
+
+  // Fetch performance data
+  useEffect(() => {
+    const fetchPerformance = async () => {
+      try {
+        const response = await fetchWithAuth('http://localhost:5000/api/exams/student-performance');
+        const data = await response.json();
+        
+        if (data.success && data.performance) {
+          setPerformance(data.performance);
+        }
+      } catch (error) {
+        console.error('Error fetching performance:', error);
+      } finally {
+        setLoadingPerformance(false);
+      }
+    };
+
+    fetchPerformance();
+  }, []);
+
+  // Format time spent
+  const formatTimeSpent = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes} min`;
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-accent/10 to-primary/5">
@@ -159,34 +232,63 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Performance Stats</h3>
-                    <div className="grid gap-4">
-                      <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
-                        <span>Tests Attempted</span>
-                        <span className="font-bold text-primary">24</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
-                        <span>Average Score</span>
-                        <span className="font-bold text-primary">88.5%</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
-                        <span>Best Score</span>
-                        <span className="font-bold text-primary">96%</span>
+                {loadingPerformance ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Loading performance data...</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Performance Stats</h3>
+                      <div className="grid gap-4">
+                        <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
+                          <span>Tests Attempted</span>
+                          <span className="font-bold text-primary">{performance.testsAttempted}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
+                          <span>Average Score</span>
+                          <span className="font-bold text-primary">{performance.averageScore}%</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
+                          <span>Best Score</span>
+                          <span className="font-bold text-primary">{performance.bestScore}%</span>
+                        </div>
+                        {performance.totalTimeSpent > 0 && (
+                          <div className="flex justify-between items-center p-3 bg-accent/20 rounded-lg">
+                            <span>Total Time Spent</span>
+                            <span className="font-bold text-primary">{formatTimeSpent(performance.totalTimeSpent)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Recent Scores</h3>
-                    <div className="h-48 flex items-center justify-center border-2 border-dashed border-primary/30 rounded-xl bg-gradient-to-br from-accent/20 to-primary/5">
-                      <div className="text-center">
-                        <div className="text-4xl mb-2">📈</div>
-                        <p className="text-muted-foreground">Score trend chart</p>
-                      </div>
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Recent Scores</h3>
+                      {performance.recentScores && performance.recentScores.length > 0 ? (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {performance.recentScores.slice(0, 5).map((score: RecentScore, index: number) => (
+                            <div key={index} className="flex justify-between items-center p-2 border rounded-lg">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium truncate">{score.examTitle}</p>
+                                <p className="text-xs text-muted-foreground">{score.date}</p>
+                              </div>
+                              <Badge className={score.score >= 90 ? 'bg-green-500' : score.score >= 70 ? 'bg-blue-500' : 'bg-yellow-500'}>
+                                {score.score}%
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="h-48 flex items-center justify-center border-2 border-dashed border-primary/30 rounded-xl bg-gradient-to-br from-accent/20 to-primary/5">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">📈</div>
+                            <p className="text-muted-foreground">No test scores yet</p>
+                            <p className="text-sm text-muted-foreground mt-1">Complete tests to see your progress</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
                 <div className="mt-4 flex justify-end">
                   <Button variant="outline" asChild>
                     <Link to="/my-performance">View Detailed Performance</Link>

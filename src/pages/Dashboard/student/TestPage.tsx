@@ -88,6 +88,7 @@ const TestPage: React.FC = () => {
   const [warningCount, setWarningCount] = useState<number>(0);
   const [isTestActive, setIsTestActive] = useState<boolean>(true);
   const [timeLeft, setTimeLeft] = useState<number>(parseInt(duration) * 60);
+  const [initialTime] = useState<number>(parseInt(duration) * 60);
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState<boolean>(false);
   const [showWarning, setShowWarning] = useState<boolean>(false);
@@ -96,6 +97,7 @@ const TestPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [score, setScore] = useState<number | null>(null);
 
   // Default questions as fallback
   const defaultQuestions: Question[] = [
@@ -310,21 +312,24 @@ const TestPage: React.FC = () => {
 
   const handleSubmit = async (reason: string = "Manual submission") => {
     setIsTestActive(false);
-    let score = 0;
+    const timeSpentSeconds = initialTime - timeLeft;
+    let calculatedScore = 0;
     questions.forEach(q => {
       if (answers[q.id] === q.correctAnswer) {
-        score += (maxMarks || 100) / questions.length;
+        calculatedScore += (maxMarks || 100) / questions.length;
       }
     });
+    setScore(calculatedScore);
     try {
-      const response = await fetchWithAuth('http://localhost:5000/api/submit-test', {
+      const response = await fetchWithAuth('http://localhost:5000/api/exams/submit-test', {
         method: 'POST',
         body: JSON.stringify({
           examId,
           testName,
           answers,
-          score,
+          score: calculatedScore,
           reason,
+          timeSpentSeconds: timeSpentSeconds,
           userId: localStorage.getItem('userId') || 'unknown',
         }),
       });
@@ -334,17 +339,18 @@ const TestPage: React.FC = () => {
         throw new Error(data.error || 'Failed to submit test');
       }
       console.log('Test submitted successfully:', data);
-      setWarningMessage(`Test submitted! Your score: ${score}/${maxMarks || 100}`);
+      setWarningMessage(`Test submitted! Your score: ${calculatedScore}/${maxMarks || 100}`);
       setShowWarning(true);
     } catch (err) {
       console.error('Error submitting test:', err);
-      setWarningMessage(`Test submitted locally! Your score: ${score}/${maxMarks || 100}. Failed to save to server.`);
+      setWarningMessage(`Test submitted locally! Your score: ${calculatedScore}/${maxMarks || 100}. Failed to save to server.`);
       setShowWarning(true);
     }
-    setTimeout(() => {
-      navigate(redirectPath);
-      window.location.reload();
-    }, 2000);
+  };
+
+  const handleReturn = () => {
+    navigate(redirectPath);
+    window.location.reload();
   };
 
   const formatTime = (seconds: number): string => {
@@ -389,21 +395,42 @@ const TestPage: React.FC = () => {
     );
   }
 
+  // Score display after test submission
+  if (!isTestActive && score !== null) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <Alert className="max-w-md w-full shadow-lg border-gray-200">
+          <AlertCircle className="h-4 w-4 text-blue-500" />
+          <AlertTitle className="text-lg font-bold text-gray-800">Test Submitted</AlertTitle>
+          <AlertDescription className="mt-2 text-gray-700">
+            {warningMessage}
+            <div className="mt-4">
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+                onClick={handleReturn}
+              >
+                Return to {redirectPath.includes('practice') ? 'Practice Exams' : 'Enrollment'}
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   // Prevent rendering if not in fullscreen or test is terminated
-  if (!isFullScreen || !isTestActive || isDevToolsOpen) {
+  if (!isFullScreen || isDevToolsOpen) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <Alert variant="destructive" className="max-w-md w-full shadow-lg border-red-300">
           <AlertCircle className="h-4 w-4 text-red-500" />
           <AlertTitle className="text-lg font-bold text-gray-800">
-            {isDevToolsOpen ? "Test Terminated" : !isTestActive ? "Test Terminated" : "Fullscreen Required"}
+            {isDevToolsOpen ? "Test Terminated" : "Fullscreen Required"}
           </AlertTitle>
           <AlertDescription className="mt-2 text-gray-700">
             {warningMessage || (
               isDevToolsOpen
                 ? "The test was terminated due to developer tools detection."
-                : !isTestActive
-                ? "The test was terminated due to security violations or time expiration."
                 : "This test requires fullscreen mode. Please enable fullscreen to start the test."
             )}
             <div className="mt-4 flex flex-col gap-2">
@@ -425,18 +452,18 @@ const TestPage: React.FC = () => {
                   Enter Fullscreen
                 </Button>
               )}
-              {(showWarning || isDevToolsOpen || !isTestActive) && (
+              {(showWarning || isDevToolsOpen) && (
                 <Button
                   className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
                   onClick={() => {
                     setShowWarning(false);
-                    if (!isTestActive || isDevToolsOpen) {
+                    if (isDevToolsOpen) {
                       navigate(redirectPath);
                       window.location.reload();
                     }
                   }}
                 >
-                  {isDevToolsOpen || !isTestActive ? `Return to ${redirectPath.includes('practice') ? 'Practice Exams' : 'Enrollment'}` : "Acknowledge"}
+                  {isDevToolsOpen ? `Return to ${redirectPath.includes('practice') ? 'Practice Exams' : 'Enrollment'}` : "Acknowledge"}
                 </Button>
               )}
             </div>

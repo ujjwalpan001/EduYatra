@@ -74,13 +74,17 @@ interface Exam {
 }
 
 interface AttendedTest {
+  _id?: string;
+  examId?: string;
   test: string;
   score: number;
   date: string;
   instructor: string;
   grade: string;
   totalQuestions: number;
+  correctAnswers?: number;
   timeSpent: string;
+  submittedAt?: Date;
 }
 
 const Enrollment: React.FC = () => {
@@ -90,49 +94,11 @@ const Enrollment: React.FC = () => {
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [showAttendedDetails, setShowAttendedDetails] = useState<string | null>(null);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [attendedTests, setAttendedTests] = useState<AttendedTest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingAttended, setLoadingAttended] = useState<boolean>(true);
 
-  // Hardcoded attended tests (replace with API call if needed)
-  const attendedTests: AttendedTest[] = [
-    {
-      test: "Mathematics Quiz - Algebra",
-      score: 94,
-      date: "Dec 8, 2024",
-      instructor: "Dr. Sarah Johnson",
-      grade: "A",
-      totalQuestions: 25,
-      timeSpent: "42 min"
-    },
-    {
-      test: "Physics Assignment - Mechanics",
-      score: 88,
-      date: "Dec 6, 2024",
-      instructor: "Prof. Michael Chen",
-      grade: "B+",
-      totalQuestions: 30,
-      timeSpent: "58 min"
-    },
-    {
-      test: "Chemistry Lab Report",
-      score: 92,
-      date: "Dec 4, 2024",
-      instructor: "Dr. Emily Davis",
-      grade: "A-",
-      totalQuestions: 20,
-      timeSpent: "35 min"
-    },
-    {
-      test: "Biology Test - Cell Structure",
-      score: 87,
-      date: "Dec 2, 2024",
-      instructor: "Dr. Robert Wilson",
-      grade: "B+",
-      totalQuestions: 28,
-      timeSpent: "50 min"
-    },
-  ];
-
-  // Fetch assigned exams
+  // Fetch assigned (ongoing) exams
   useEffect(() => {
     const fetchExams = async () => {
       setLoading(true);
@@ -184,6 +150,45 @@ const Enrollment: React.FC = () => {
 
     fetchExams();
   }, [navigate]);
+
+  // Fetch attended tests
+  useEffect(() => {
+    const fetchAttendedTests = async () => {
+      setLoadingAttended(true);
+      try {
+        console.log('🔍 Fetching attended tests from backend...');
+        const response = await fetchWithAuth('http://localhost:5000/api/exams/attended-tests');
+        const data = await response.json();
+        console.log('📥 Attended tests RAW response:', data);
+        console.log('📊 Response status:', response.status, response.ok);
+
+        if (!response.ok) {
+          console.error('❌ Response not OK:', data);
+          throw new Error(data.error || 'Failed to fetch attended tests');
+        }
+
+        if (data.success && data.attendedTests) {
+          console.log('✅ Setting attended tests:', data.attendedTests);
+          console.log('📈 Number of attended tests:', data.attendedTests.length);
+          setAttendedTests(data.attendedTests);
+        } else {
+          console.warn('⚠️ No attended tests in response or success=false');
+          setAttendedTests([]);
+        }
+      } catch (error) {
+        console.error('❌ Fetch attended tests error:', error);
+        console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+        // Show error toast to help debug
+        toast.error(`Failed to load attended tests: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setAttendedTests([]);
+      } finally {
+        setLoadingAttended(false);
+        console.log('🏁 Attended tests loading finished');
+      }
+    };
+
+    fetchAttendedTests();
+  }, []);
 
   const handleContinueTest = (test: Pick<Exam, '_id' | 'title' | 'numberOfQuestionsPerSet' | 'duration_minutes'>) => {
     console.log('handleContinueTest called with test:', test); // Debug log
@@ -344,99 +349,127 @@ const Enrollment: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="attended" className="space-y-6 mt-6">
-                <div className="space-y-4">
-                  {attendedTests.map((result, index) => (
-                    <div key={result.test}>
-                      <Card className="border border-gray-200 transition-all duration-200 hover:shadow-lg animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
-                        <CardContent className="p-6">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                                <h3 className="font-medium text-gray-800">{result.test}</h3>
+                {loadingAttended ? (
+                  <p className="text-sm text-gray-500">Loading attended tests...</p>
+                ) : attendedTests.length === 0 ? (
+                  <p className="text-sm text-gray-500">No tests attended yet.</p>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      {attendedTests.map((result, index) => (
+                        <div key={result._id || result.test}>
+                          <Card className="border border-gray-200 transition-all duration-200 hover:shadow-lg animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
+                            <CardContent className="p-6">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    <h3 className="font-medium text-gray-800">{result.test}</h3>
+                                  </div>
+                                  <p className="text-sm text-gray-500">by {result.instructor}</p>
+                                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                                    <span>{result.date}</span>
+                                    <span>•</span>
+                                    <span>{result.totalQuestions} questions</span>
+                                    <span>•</span>
+                                    <span>Completed in {result.timeSpent}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right space-y-2">
+                                  <div className="text-2xl font-bold text-blue-500">{result.score}%</div>
+                                  <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'}>
+                                    Grade: {result.grade}
+                                  </Badge>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+                                      onClick={() => toggleAttendedDetails(result._id || result.test)}
+                                    >
+                                      <Info className="h-4 w-4 mr-1" />
+                                      {showAttendedDetails === (result._id || result.test) ? 'Hide Details' : 'View Details'}
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-500">by {result.instructor}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span>{result.date}</span>
-                                <span>•</span>
-                                <span>{result.totalQuestions} questions</span>
-                                <span>•</span>
-                                <span>Completed in {result.timeSpent}</span>
-                              </div>
-                            </div>
-                            <div className="text-right space-y-2">
-                              <div className="text-2xl font-bold text-blue-500">{result.score}%</div>
-                              <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'}>
-                                Grade: {result.grade}
-                              </Badge>
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
-                                  onClick={() => toggleAttendedDetails(result.test)}
+                            </CardContent>
+                          </Card>
+                          {showAttendedDetails === (result._id || result.test) && (
+                            <Card className="mt-4 border border-gray-200 shadow-md animate-fade-in">
+                              <CardHeader>
+                                <CardTitle className="text-lg text-gray-800">Test Details</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-2 text-gray-700">
+                                  <p><strong>Test Name:</strong> {result.test}</p>
+                                  <p><strong>Instructor:</strong> {result.instructor}</p>
+                                  <p><strong>Score:</strong> {result.score}%</p>
+                                  <p><strong>Grade:</strong> {result.grade}</p>
+                                  <p><strong>Date:</strong> {result.date}</p>
+                                  <p><strong>Total Questions:</strong> {result.totalQuestions}</p>
+                                  {result.correctAnswers !== undefined && (
+                                    <p><strong>Correct Answers:</strong> {result.correctAnswers}/{result.totalQuestions}</p>
+                                  )}
+                                  <p><strong>Time Spent:</strong> {result.timeSpent}</p>
+                                </div>
+                                <Button
+                                  className="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+                                  onClick={() => toggleAttendedDetails(result._id || result.test)}
                                 >
-                                  <Info className="h-4 w-4 mr-1" />
-                                  {showAttendedDetails === result.test ? 'Hide Details' : 'View Details'}
+                                  Close
                                 </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      {showAttendedDetails === result.test && (
-                        <Card className="mt-4 border border-gray-200 shadow-md animate-fade-in">
-                          <CardHeader>
-                            <CardTitle className="text-lg text-gray-800">Test Details</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2 text-gray-700">
-                              <p><strong>Test Name:</strong> {result.test}</p>
-                              <p><strong>Instructor:</strong> {result.instructor}</p>
-                              <p><strong>Score:</strong> {result.score}%</p>
-                              <p><strong>Grade:</strong> {result.grade}</p>
-                              <p><strong>Date:</strong> {result.date}</p>
-                              <p><strong>Total Questions:</strong> {result.totalQuestions}</p>
-                              <p><strong>Time Spent:</strong> {result.timeSpent}</p>
-                            </div>
-                            <Button
-                              className="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
-                              onClick={() => toggleAttendedDetails(result.test)}
-                            >
-                              Close
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      )}
+                              </CardContent>
+                            </Card>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                <Card className="border border-gray-200 shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-gray-800">Attendance Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-500">12</div>
-                        <p className="text-sm text-gray-500">Total Tests</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-500">89.5%</div>
-                        <p className="text-sm text-gray-500">Average Score</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-500">94%</div>
-                        <p className="text-sm text-gray-500">Best Score</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-500">8h 45m</div>
-                        <p className="text-sm text-gray-500">Total Time</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Card className="border border-gray-200 shadow-md">
+                      <CardHeader>
+                        <CardTitle className="text-gray-800">Attendance Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid gap-4 md:grid-cols-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-500">{attendedTests.length}</div>
+                            <p className="text-sm text-gray-500">Total Tests</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-500">
+                              {attendedTests.length > 0 
+                                ? (attendedTests.reduce((sum, t) => sum + t.score, 0) / attendedTests.length).toFixed(1)
+                                : 0}%
+                            </div>
+                            <p className="text-sm text-gray-500">Average Score</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-500">
+                              {attendedTests.length > 0 ? Math.max(...attendedTests.map(t => t.score)) : 0}%
+                            </div>
+                            <p className="text-sm text-gray-500">Best Score</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-500">
+                              {attendedTests.length > 0 
+                                ? attendedTests.reduce((sum, t) => {
+                                    const time = t.timeSpent.match(/(\d+)/g);
+                                    if (!time) return sum;
+                                    if (t.timeSpent.includes('h')) {
+                                      return sum + parseInt(time[0]) * 60 + (time[1] ? parseInt(time[1]) : 0);
+                                    }
+                                    return sum + parseInt(time[0]);
+                                  }, 0)
+                                : 0} min
+                            </div>
+                            <p className="text-sm text-gray-500">Total Time</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
