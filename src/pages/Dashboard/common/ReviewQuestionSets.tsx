@@ -99,7 +99,7 @@ const ReviewQuestionSets = () => {
           return;
         }
 
-        const res = await axios.get<QuestionBankResponse>('http://localhost:5000/api/question-banks/all', {
+        const res = await axios.get<QuestionBankResponse>('https://eduyatrabackend.onrender.com/api/question-banks/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -108,7 +108,7 @@ const ReviewQuestionSets = () => {
             res.data.data.map(async (bank) => {
               try {
                 const questionsRes = await axios.get<QuestionsResponse>(
-                  `http://localhost:5000/api/question-banks/questions?questionBankId=${bank._id}`,
+                  `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -224,7 +224,7 @@ const ReviewQuestionSets = () => {
 
       console.log('🔍 Fetching questions for bank:', bank._id);
       const response = await axios.get<QuestionsResponse>(
-        `http://localhost:5000/api/question-banks/questions?questionBankId=${bank._id}`,
+        `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -293,7 +293,7 @@ const ReviewQuestionSets = () => {
 
       // Update the question via API
       const response = await axios.put<UpdateQuestionResponse>(
-        `http://localhost:5000/api/questions/${questionId}`,
+        `https://eduyatrabackend.onrender.com/api/questions/${questionId}`,
         editedQuestion,
         { headers: { Authorization: `Bearer ${token}` } }
       );
