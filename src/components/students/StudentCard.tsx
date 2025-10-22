@@ -40,8 +40,14 @@ export function StudentCard({ student, onEdit, onSelect, onRemove }: StudentCard
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8"
-            onClick={onRemove}
+            className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm(`Are you sure you want to remove ${student.name} from this batch?`)) {
+                onRemove();
+              }
+            }}
+            title="Remove student"
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete</span>

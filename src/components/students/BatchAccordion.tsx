@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Batch, Student } from "@/types/student";
 import { StudentCard } from "./StudentCard";
@@ -6,10 +6,11 @@ import { StudentCard } from "./StudentCard";
 interface BatchAccordionProps {
   batch: Batch;
   onToggle: (batchId: string) => void;
-  onEditStudent: (batchId: string, student: Student) => void; // Updated signature
+  onEditStudent: (batchId: string, student: Student) => void;
   onSelectStudent: (studentId: string, selected: boolean) => void;
   onViewAll: (batchId: string) => void;
   onRemoveStudent: (batchId: string, studentId: string) => void;
+  onDeleteBatch: (batchId: string) => void;
 }
 
 export function BatchAccordion({
@@ -19,6 +20,7 @@ export function BatchAccordion({
   onSelectStudent,
   onViewAll,
   onRemoveStudent,
+  onDeleteBatch,
 }: BatchAccordionProps) {
   const hasStudents = batch.students && batch.students.length > 0;
   const studentCount = batch.students?.length || 0;
@@ -41,19 +43,35 @@ export function BatchAccordion({
             {studentCount} {studentCount === 1 ? 'student' : 'students'}
           </span>
         </div>
-        {hasStudents && (
+        <div className="flex items-center space-x-2">
+          {hasStudents && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewAll(batch.id);
+              }}
+              className="text-primary hover:text-primary/80"
+            >
+              View All
+            </Button>
+          )}
           <Button 
             variant="ghost" 
-            size="sm"
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              onViewAll(batch.id);
+              if (window.confirm(`Are you sure you want to delete the batch "${batch.name}" and all its students?`)) {
+                onDeleteBatch(batch.id);
+              }
             }}
-            className="text-primary hover:text-primary/80"
+            className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+            title="Delete batch"
           >
-            View All
+            <Trash2 className="h-4 w-4" />
           </Button>
-        )}
+        </div>
       </div>
       
       {batch.isExpanded && (
