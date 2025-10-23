@@ -95,206 +95,89 @@ const MonitorTest: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  // Simulate real-time data fetching
+  // Fetch real-time data from backend
   useEffect(() => {
     const fetchTestData = async () => {
       setLoading(true);
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const token = localStorage.getItem('token');
+        if (!token) {
+          toast.error('Authentication required');
+          navigate('/login');
+          return;
+        }
+
+        console.log(`📊 Fetching monitoring data for exam ${testId}`);
         
-        // Mock test details
-        const mockTestDetails: TestDetails = {
-          id: testId || 'test1',
-          title: 'Mathematics Mid-term Exam',
-          subject: 'Mathematics',
-          duration: 90,
-          totalStudents: 45,
-          activeStudents: 38,
-          completedStudents: 7,
-          startTime: '2025-06-23T10:00:00',
-          endTime: '2025-06-23T11:30:00',
-          questionSets: 3,
-          questionsPerSet: 15,
-          securitySettings: {
-            disableTabSwitching: true,
-            disableRightClick: true,
-            enableProctoring: true,
-            enableWebcam: true
+        const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        };
+        });
 
-        // Mock student data
-        const mockStudents: Student[] = [
-          {
-            id: '1',
-            name: 'John Smith',
-            email: 'john.smith@school.edu',
-            status: 'In Progress',
-            timeRemaining: 45,
-            totalTime: 90,
-            questionSet: 1,
-            currentQuestion: 8,
-            totalQuestions: 15,
-            proctoring: {
-              webcamEnabled: true,
-              tabSwitches: 0,
-              suspiciousActivity: 0,
-              lastActivity: '2 mins ago'
-            },
-            answers: {
-              attempted: 7,
-              marked: 2
-            }
-          },
-          {
-            id: '2',
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@school.edu',
-            status: 'In Progress',
-            timeRemaining: 38,
-            totalTime: 90,
-            questionSet: 2,
-            currentQuestion: 12,
-            totalQuestions: 15,
-            proctoring: {
-              webcamEnabled: true,
-              tabSwitches: 2,
-              suspiciousActivity: 1,
-              lastActivity: '1 min ago'
-            },
-            answers: {
-              attempted: 11,
-              marked: 3
-            }
-          },
-          {
-            id: '3',
-            name: 'Michael Davis',
-            email: 'michael.davis@school.edu',
-            status: 'Completed',
-            timeRemaining: 0,
-            totalTime: 90,
-            questionSet: 1,
-            currentQuestion: 15,
-            totalQuestions: 15,
-            proctoring: {
-              webcamEnabled: true,
-              tabSwitches: 0,
-              suspiciousActivity: 0,
-              lastActivity: '15 mins ago'
-            },
-            answers: {
-              attempted: 15,
-              marked: 1
-            }
-          },
-          {
-            id: '4',
-            name: 'Emily Wilson',
-            email: 'emily.wilson@school.edu',
-            status: 'In Progress',
-            timeRemaining: 52,
-            totalTime: 90,
-            questionSet: 3,
-            currentQuestion: 5,
-            totalQuestions: 15,
-            proctoring: {
-              webcamEnabled: false,
-              tabSwitches: 1,
-              suspiciousActivity: 0,
-              lastActivity: '30 secs ago'
-            },
-            answers: {
-              attempted: 4,
-              marked: 1
-            }
-          },
-          {
-            id: '5',
-            name: 'David Brown',
-            email: 'david.brown@school.edu',
-            status: 'Not Started',
-            timeRemaining: 90,
-            totalTime: 90,
-            questionSet: 2,
-            currentQuestion: 0,
-            totalQuestions: 15,
-            proctoring: {
-              webcamEnabled: false,
-              tabSwitches: 0,
-              suspiciousActivity: 0,
-              lastActivity: 'Never'
-            },
-            answers: {
-              attempted: 0,
-              marked: 0
-            }
-          }
-        ];
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch monitoring data');
+        }
 
-        // Mock alerts
-        const mockAlerts: Alert[] = [
-          {
-            id: '1',
-            studentId: '2',
-            studentName: 'Sarah Johnson',
-            type: 'tab_switch',
-            message: 'Student switched tabs 2 times',
-            timestamp: '2025-06-23T10:25:00',
-            severity: 'medium'
-          },
-          {
-            id: '2',
-            studentId: '4',
-            studentName: 'Emily Wilson',
-            type: 'webcam_disabled',
-            message: 'Webcam has been disabled',
-            timestamp: '2025-06-23T10:30:00',
-            severity: 'high'
-          },
-          {
-            id: '3',
-            studentId: '2',
-            studentName: 'Sarah Johnson',
-            type: 'suspicious_activity',
-            message: 'Suspicious activity detected',
-            timestamp: '2025-06-23T10:28:00',
-            severity: 'high'
-          }
-        ];
+        const data = await response.json();
+        console.log('✅ Monitoring data received:', data);
 
-        setTestDetails(mockTestDetails);
-        setStudents(mockStudents);
-        setAlerts(mockAlerts);
+        if (data.success) {
+          setTestDetails(data.testDetails);
+          setStudents(data.students);
+          setAlerts(data.alerts || []);
+          toast.success('Monitoring data loaded');
+        } else {
+          throw new Error(data.error || 'Failed to load monitoring data');
+        }
       } catch (error) {
-        console.error('Error fetching test data:', error);
-        toast.error("❌ Failed to load test data");
+        console.error('❌ Error fetching test data:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to load monitoring data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestData();
-  }, [testId]);
+    if (testId) {
+      fetchTestData();
+    }
+  }, [testId, navigate]);
 
   // Auto-refresh data every 30 seconds
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || !testId) return;
     
-    const interval = setInterval(() => {
-      // Simulate real-time updates
-      setStudents(prev => prev.map(student => ({
-        ...student,
-        timeRemaining: Math.max(0, student.timeRemaining - 1),
-        currentQuestion: student.status === 'In Progress' ? 
-          Math.min(student.totalQuestions, student.currentQuestion + Math.random() > 0.8 ? 1 : 0) : 
-          student.currentQuestion
-      })));
-    }, 30000);
+    const fetchUpdatedData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setTestDetails(data.testDetails);
+            setStudents(data.students);
+            setAlerts(data.alerts || []);
+          }
+        }
+      } catch (error) {
+        console.error('Auto-refresh error:', error);
+      }
+    };
+
+    const interval = setInterval(fetchUpdatedData, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, [autoRefresh]);
+  }, [autoRefresh, testId]);
 
   const getStatusColor = (status: Student['status']) => {
     switch (status) {
@@ -329,15 +212,103 @@ const MonitorTest: React.FC = () => {
     ? students 
     : students.filter(student => student.status === filterStatus);
 
-  const handleRefresh = () => {
-    toast.success("🔄 Data refreshed");
-    // In real implementation, this would trigger a data fetch
+  const handleRefresh = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setTestDetails(data.testDetails);
+          setStudents(data.students);
+          setAlerts(data.alerts || []);
+          toast.success("🔄 Data refreshed");
+        }
+      } else {
+        toast.error("Failed to refresh data");
+      }
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast.error("Failed to refresh data");
+    }
   };
 
-  const handleStudentAction = (studentId: string, action: string) => {
+  const handleStudentAction = async (studentId: string, action: string) => {
     const student = students.find(s => s.id === studentId);
-    if (student) {
-      toast.success(`${action} applied to ${student.name}`);
+    if (!student) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      if (action === 'Pause Test') {
+        console.log(`⏸️ Pausing test for student ${student.email}`);
+        
+        const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/pause-test', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            examId: testId,
+            studentEmail: student.email
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          toast.success(`✅ Test paused for ${student.name}`);
+          // Refresh monitoring data
+          window.location.reload();
+        } else {
+          throw new Error(data.error || 'Failed to pause test');
+        }
+      } else if (action === 'End Test') {
+        console.log(`⏹️ Ending test for student ${student.email}`);
+        
+        const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/end-test', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            examId: testId,
+            studentEmail: student.email
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          toast.success(`✅ Test ended for ${student.name}`);
+          // Refresh monitoring data
+          window.location.reload();
+        } else {
+          throw new Error(data.error || 'Failed to end test');
+        }
+      } else {
+        toast.success(`${action} applied to ${student.name}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error performing ${action}:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to ${action.toLowerCase()}`);
     }
   };
 

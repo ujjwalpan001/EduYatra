@@ -71,6 +71,8 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/conduct-test/online" element={<ConductTestOnline />} />
             <Route path="/monitor" element={<Monitor />} />
+            <Route path="/monitor/:testId" element={<Monitor />} />
+            <Route path="/dashboard/common/monitor/:testId" element={<Monitor />} />
             <Route path="/conduct-test/offline" element={<ConductTestOffline />} />
             <Route path="/questions/create" element={<CreateQuestion />} />
             <Route path="/questions/review" element={<ReviewQuestionSets />} />

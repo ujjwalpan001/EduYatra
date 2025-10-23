@@ -1009,7 +1009,7 @@ const ConductTestOnline: React.FC = () => {
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'view')}>View</Button>
                     <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'manage')}>Manage</Button>
-                    <Button variant="outline" size="sm">Monitor</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/common/monitor/${test.id}`)}>Monitor</Button>
                   </div>
                 </div>
               ))
