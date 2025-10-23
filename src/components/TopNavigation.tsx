@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; // Add Label import
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,12 +55,6 @@ interface UpdateProfileResponse {
     teacherId?: string;
   };
 }
-
-const useTheme = () => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  return { theme, toggleTheme };
-};
 
 function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setProfile: React.Dispatch<React.SetStateAction<Profile>>; role: "student" | "teacher" }) {
   const [editForm, setEditForm] = useState<Profile>({

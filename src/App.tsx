@@ -21,7 +21,6 @@ import AdminAuth from "./pages/auth/AdminAuth";
 
 // Common pages
 import TeacherIndex from "./pages/Dashboard/common/Index";
-import Analytics from "./pages/Dashboard/common/Analytics";
 import AttendedEnrollment from "./pages/Dashboard/common/AttendedEnrollment";
 import ConductTestOffline from "./pages/Dashboard/common/ConductTestOffline";
 import ConductTestOnline from "./pages/Dashboard/common/ConductTestOnline";
@@ -34,7 +33,6 @@ import MyPerformance from "./pages/Dashboard/common/MyPerformance";
 import NotFound from "./pages/Dashboard/common/NotFound";
 import OngoingEnrollment from "./pages/Dashboard/common/OngoingEnrollment";
 import OngoingTestExam from "./pages/Dashboard/common/OngoingTestExam";
-import Reports from "./pages/Dashboard/common/Reports";
 import ReviewQuestionSets from "./pages/Dashboard/common/ReviewQuestionSets";
 import TestExamAnalysis from "./pages/Dashboard/common/TestExamAnalysis";
 
@@ -67,8 +65,6 @@ const App = () => (
             <Route path="/auth/teacher" element={<TeacherAuth />} />
             <Route path="/auth/admin" element={<AdminAuth />} />
             <Route path="/teacher" element={<TeacherIndex/>} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/reports" element={<Reports />} />
             <Route path="/conduct-test/online" element={<ConductTestOnline />} />
             <Route path="/monitor" element={<Monitor />} />
             <Route path="/monitor/:testId" element={<Monitor />} />

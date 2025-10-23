@@ -75,15 +75,6 @@ export function AppSidebar({ role: propRole }: AppSidebarProps) {
 
   const teacherMenu = [
     {
-      title: "Insights",
-      icon: BarChart3,
-      items: [
-        { title: "Insights", href: "/" },
-        { title: "Analytics", href: "/analytics" },
-        { title: "Reports", href: "/reports" },
-      ],
-    },
-    {
       title: "Conduct Test",
       icon: PenTool,
       items: [
@@ -132,7 +123,10 @@ export function AppSidebar({ role: propRole }: AppSidebarProps) {
         } fixed left-0 left top-0 top h-full z-40`}
       >
         <SidebarHeader className="border-b border-primary/10 p-4">
-          <div className="flex items-center gap-2">
+          <Link 
+            to={role === "student" ? "/student" : "/teacher"} 
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
@@ -146,7 +140,7 @@ export function AppSidebar({ role: propRole }: AppSidebarProps) {
                 </p>
               </div>
             )}
-          </div>
+          </Link>
         </SidebarHeader>
 
         <SidebarContent className="p-2">

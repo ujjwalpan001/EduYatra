@@ -29,14 +29,14 @@ const NotFound = () => {
                 <Link to="/" className="text-primary hover:text-primary/80 transition-colors">
                   → Dashboard
                 </Link>
-                <Link to="/analytics" className="text-primary hover:text-primary/80 transition-colors">
-                  → Analytics
-                </Link>
                 <Link to="/conduct-test/online" className="text-primary hover:text-primary/80 transition-colors">
                   → Online Tests
                 </Link>
                 <Link to="/questions/create" className="text-primary hover:text-primary/80 transition-colors">
                   → Create Questions
+                </Link>
+                <Link to="/manage-students" className="text-primary hover:text-primary/80 transition-colors">
+                  → Manage Students
                 </Link>
               </div>
             </div>
