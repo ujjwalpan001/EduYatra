@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -122,6 +122,8 @@ interface ExamSchedule {
 
 const ConductTestOnline: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const examRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(true);
@@ -240,6 +242,29 @@ const ConductTestOnline: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  // Scroll to exam when examId is present in URL
+  useEffect(() => {
+    const examId = searchParams.get('examId');
+    if (examId && exams.length > 0) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        const examElement = examRefs.current[examId];
+        if (examElement) {
+          examElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          // Add highlight effect
+          examElement.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+          // Remove highlight after 3 seconds
+          setTimeout(() => {
+            examElement.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+          }, 3000);
+        }
+      }, 300);
+    }
+  }, [searchParams, exams]);
 
   // Fetch questions when question bank changes
   useEffect(() => {
@@ -996,7 +1021,8 @@ const ConductTestOnline: React.FC = () => {
               exams.map((test, index) => (
                 <div
                   key={test.id}
-                  className="flex justify-between items-center p-4 border rounded-lg animate-slide-in"
+                  ref={(el) => { examRefs.current[test.id] = el; }}
+                  className="flex justify-between items-center p-4 border rounded-lg animate-slide-in transition-all duration-300"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="flex items-center gap-4">
