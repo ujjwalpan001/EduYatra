@@ -67,9 +67,15 @@ const OngoingTestExam = () => {
       const ongoing: Exam[] = [];
       const scheduled: Exam[] = [];
 
-      exams.forEach((exam: Exam) => {
+      exams.forEach((exam: Exam & { is_ended?: boolean }) => {
         const startTime = new Date(exam.start_time);
         const endTime = new Date(exam.end_time);
+
+        // Skip exams that have been manually ended
+        if (exam.is_ended) {
+          console.log(`⏹️ Skipping ended exam: ${exam.title}`);
+          return;
+        }
 
         if (now >= startTime && now <= endTime) {
           // Ongoing exam

@@ -272,7 +272,7 @@ export function StudentBatchList() {
 
   // Add single student
   const addSingleStudent = (students: Student[]) => {
-    if (!newStudentName || !newStudentEmail || !newStudentUserId) {
+    if (!newStudentName || !newStudentEmail) {
       return students;
     }
     return [
@@ -281,7 +281,7 @@ export function StudentBatchList() {
         id: `student-${Date.now()}`,
         name: newStudentName.trim(),
         email: newStudentEmail.trim(),
-        userId: newStudentUserId.trim(),
+        userId: newStudentUserId.trim() || undefined,
         batchId: editingBatchId || `batch-${Date.now()}`,
         isSelected: false,
       },
@@ -293,16 +293,16 @@ export function StudentBatchList() {
     if (!pastedStudentData) return students;
 
     const newStudents = pastedStudentData.split('\n').map(line => {
-      const [name, email, userId] = line.split(',');
-      if (name && email && userId) {
+      const [name, email, userId] = line.split(',').map(s => s?.trim());
+      if (name && email) {
         return {
           id: `student-${Date.now()}-${Math.random()}`,
-          name: name.trim(),
-          email: email.trim(),
-          userId: userId.trim(),
+          name: name,
+          email: email,
+          userId: userId || undefined,
           batchId: editingBatchId || `batch-${Date.now()}`,
           isSelected: false,
-        };
+        } as Student;
       }
       return null;
     }).filter((student): student is Student => student !== null);
@@ -319,16 +319,16 @@ export function StudentBatchList() {
       reader.onload = (e) => {
         const text = e.target?.result as string;
         const newStudents = text.split('\n').map(line => {
-          const [name, email, userId] = line.split(',');
-          if (name && email && userId) {
+          const [name, email, userId] = line.split(',').map(s => s?.trim());
+          if (name && email) {
             return {
               id: `student-${Date.now()}-${Math.random()}`,
-              name: name.trim(),
-              email: email.trim(),
-              userId: userId.trim(),
+              name: name,
+              email: email,
+              userId: userId || undefined,
               batchId: editingBatchId || `batch-${Date.now()}`,
               isSelected: false,
-            };
+            } as Student;
           }
           return null;
         }).filter((student): student is Student => student !== null);
@@ -343,19 +343,29 @@ export function StudentBatchList() {
     if (!batchName || (!editingBatchId && (!invitationCode || !instituteId || !courseId))) {
       toast({
         title: "Invalid input",
-        description: "Please fill all required fields",
+        description: "Please fill all required fields (Batch Name, Invitation Code, Institute, and Course)",
         variant: "destructive",
       });
       return;
     }
 
     let students: Student[] = [];
-    if (newStudentName && newStudentEmail && newStudentUserId) {
+    // Add single student if name and email are provided (userId is optional)
+    if (newStudentName && newStudentEmail) {
       students = addSingleStudent(students);
     }
     students = addPastedStudents(students);
     if (uploadedFile) {
       students = await addStudentsFromFile(students);
+    }
+
+    if (students.length === 0 && !editingBatchId) {
+      toast({
+        title: "No students added",
+        description: "Please add at least one student to create a batch",
+        variant: "destructive",
+      });
+      return;
     }
 
     try {
@@ -520,10 +530,10 @@ export function StudentBatchList() {
 
   // Save edited student
   const saveEditedStudent = async () => {
-    if (!newStudentName || !newStudentEmail || !newStudentUserId || !editingStudent || !editingBatchId) {
+    if (!newStudentName || !newStudentEmail || !editingStudent || !editingBatchId) {
       toast({
         title: "Invalid input",
-        description: "Please fill all fields",
+        description: "Please fill required fields (Name and Email)",
         variant: "destructive",
       });
       return;
@@ -791,30 +801,37 @@ export function StudentBatchList() {
               <label className="text-sm font-medium">Add Single Student</label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
-                  placeholder="Student Name"
+                  placeholder="Student Name *"
                   value={newStudentName}
                   onChange={(e) => setNewStudentName(e.target.value)}
                 />
                 <Input
-                  placeholder="Email"
+                  placeholder="Email *"
+                  type="email"
                   value={newStudentEmail}
                   onChange={(e) => setNewStudentEmail(e.target.value)}
                 />
                 <Input
-                  placeholder="User ID"
+                  placeholder="User ID (optional)"
                   value={newStudentUserId}
                   onChange={(e) => setNewStudentUserId(e.target.value)}
                 />
               </div>
+              <p className="text-sm text-muted-foreground">
+                If User ID is not provided, a new student account will be created automatically
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Paste Student Data</label>
               <Textarea
-                placeholder="Paste student data (name,email,userId per line)"
+                placeholder="Format: name,email or name,email,userId (one per line)"
                 value={pastedStudentData}
                 onChange={(e) => setPastedStudentData(e.target.value)}
                 className="h-32"
               />
+              <p className="text-sm text-muted-foreground">
+                Example: John Doe,john@example.com or Jane Smith,jane@example.com,507f1f77bcf86cd799439011
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Upload CSV/TXT File</label>
@@ -824,7 +841,7 @@ export function StudentBatchList() {
                 onChange={handleFileChange}
               />
               <p className="text-sm text-muted-foreground">
-                Upload CSV/txt file with format: name,email,userId
+                Format: name,email or name,email,userId (one per line). New accounts will be created for students not in the system.
               </p>
             </div>
           </div>
@@ -853,30 +870,37 @@ export function StudentBatchList() {
               <label className="text-sm font-medium">Add Single Student</label>
               <div className="grid grid-cols-3 gap-2">
                 <Input
-                  placeholder="Student Name"
+                  placeholder="Student Name *"
                   value={newStudentName}
                   onChange={(e) => setNewStudentName(e.target.value)}
                 />
                 <Input
-                  placeholder="Email"
+                  placeholder="Email *"
+                  type="email"
                   value={newStudentEmail}
                   onChange={(e) => setNewStudentEmail(e.target.value)}
                 />
                 <Input
-                  placeholder="User ID"
+                  placeholder="User ID (optional)"
                   value={newStudentUserId}
                   onChange={(e) => setNewStudentUserId(e.target.value)}
                 />
               </div>
+              <p className="text-sm text-muted-foreground">
+                If User ID is not provided, a new student account will be created automatically
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Paste Student Data</label>
               <Textarea
-                placeholder="Paste student data (name,email,userId per line)"
+                placeholder="Format: name,email or name,email,userId (one per line)"
                 value={pastedStudentData}
                 onChange={(e) => setPastedStudentData(e.target.value)}
                 className="h-32"
               />
+              <p className="text-sm text-muted-foreground">
+                Example: John Doe,john@example.com or Jane Smith,jane@example.com,507f1f77bcf86cd799439011
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Upload CSV/TXT File</label>
@@ -886,7 +910,7 @@ export function StudentBatchList() {
                 onChange={handleFileChange}
               />
               <p className="text-sm text-muted-foreground">
-                Upload CSV/txt file with format: name,email,userId
+                Format: name,email or name,email,userId (one per line). New accounts will be created for students not in the system.
               </p>
             </div>
           </div>

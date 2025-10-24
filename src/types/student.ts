@@ -2,7 +2,7 @@ export interface Student {
   id: string;
   name: string;
   email: string;
-  userId: string;
+  userId?: string; // Optional - will be created automatically if not provided
   batchId: string;
   isSelected: boolean; // Changed to required
 }

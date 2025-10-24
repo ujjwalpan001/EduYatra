@@ -280,12 +280,7 @@ const Enrollment: React.FC = () => {
                       <div key={test._id}>
                         <Card className="border border-gray-200 transition-all duration-200 hover:shadow-lg animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
                           <CardHeader>
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-lg text-gray-800">{test.title}</CardTitle>
-                              <Badge variant={test.deadline === 'Expired' ? 'destructive' : test.progress > 80 ? 'default' : test.progress > 50 ? 'secondary' : 'destructive'} className={test.deadline === 'Expired' ? 'bg-red-500' : test.progress > 80 ? 'bg-blue-500' : test.progress > 50 ? 'bg-gray-500' : 'bg-red-500'}>
-                                {test.deadline}
-                              </Badge>
-                            </div>
+                            <CardTitle className="text-lg text-gray-800">{test.title}</CardTitle>
                             <p className="text-sm text-gray-500">by {test.instructor}</p>
                           </CardHeader>
                           <CardContent>
