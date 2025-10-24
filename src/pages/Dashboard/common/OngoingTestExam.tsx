@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Users, Eye, Pause, Play, StopCircle, RefreshCw, Calendar } from "lucide-react";
+import { Clock, Users, Eye, Pause, Play, StopCircle, RefreshCw, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Exam {
@@ -115,7 +115,7 @@ const OngoingTestExam = () => {
     fetchExams();
   }, [fetchExams]);
 
-  const handleEndTest = async (examId: string) => {
+  const handleEndTest = async (examId: string, examTitle: string) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/end-test', {
@@ -129,7 +129,17 @@ const OngoingTestExam = () => {
 
       const data = await response.json();
       if (data.success) {
-        toast.success('Test ended successfully');
+        toast.success('Test ended successfully', {
+          description: 'The test has been ended for all students',
+          action: {
+            label: 'Delete Exam',
+            onClick: () => {
+              if (window.confirm(`Do you want to delete "${examTitle}" permanently?`)) {
+                handleDeleteExam(examId, examTitle);
+              }
+            }
+          }
+        });
         fetchExams(); // Refresh data
       } else {
         throw new Error(data.error || 'Failed to end test');
@@ -137,6 +147,30 @@ const OngoingTestExam = () => {
     } catch (error) {
       console.error('Error ending test:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to end test');
+    }
+  };
+
+  const handleDeleteExam = async (examId: string, examTitle: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${examId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`"${examTitle}" deleted successfully`);
+        fetchExams(); // Refresh data
+      } else {
+        throw new Error(data.error || 'Failed to delete exam');
+      }
+    } catch (error) {
+      console.error('Error deleting exam:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete exam');
     }
   };
 
@@ -303,12 +337,25 @@ const OngoingTestExam = () => {
                       size="sm"
                       onClick={() => {
                         if (window.confirm('Are you sure you want to end this test for all students?')) {
-                          handleEndTest(exam._id);
+                          handleEndTest(exam._id, exam.title);
                         }
                       }}
                     >
                       <StopCircle className="h-4 w-4 mr-1" />
                       End Test
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-red-500 text-red-500 hover:bg-red-50"
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete "${exam.title}"? This action cannot be undone.`)) {
+                          handleDeleteExam(exam._id, exam.title);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
                     </Button>
                   </div>
                 </CardContent>
@@ -359,6 +406,18 @@ const OngoingTestExam = () => {
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-red-500 text-red-500 hover:bg-red-50"
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete "${exam.title}"? This action cannot be undone.`)) {
+                            handleDeleteExam(exam._id, exam.title);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
