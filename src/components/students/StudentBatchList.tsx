@@ -687,6 +687,46 @@ export function StudentBatchList() {
     }
   };
 
+  // Delete entire batch
+  const deleteBatch = async (batchId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const batch = batches.find(b => b.id === batchId);
+      console.log(`🗑️ Deleting batch: ${batch?.name} (ID: ${batchId})`);
+
+      await axios.delete(
+        `https://eduyatrabackend.onrender.com/api/classes/${batchId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Remove batch from state
+      setBatches(prevBatches => prevBatches.filter(b => b.id !== batchId));
+
+      toast({
+        title: "✅ Batch deleted successfully",
+        description: `"${batch?.name}" and all its students have been removed.`,
+      });
+
+      console.log(`✅ Batch deleted successfully: ${batch?.name}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting batch:', error);
+      toast({
+        title: "❌ Failed to delete batch",
+        description: error.response?.data?.error || "Failed to delete batch.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // View all students in a batch
   const handleViewAll = (batchId: string) => {
     const batch = batches.find(b => b.id === batchId);
@@ -761,6 +801,7 @@ export function StudentBatchList() {
                   onSelectStudent={(studentId, selected) => handleSelectStudent(studentId, selected, batch.id)}
                   onViewAll={handleViewAll}
                   onRemoveStudent={removeStudent}
+                  onDeleteBatch={deleteBatch}
                 />
               )}
             </div>
