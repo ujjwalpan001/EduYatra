@@ -311,16 +311,28 @@ const TestPage: React.FC = () => {
   };
 
   const handleSubmit = async (reason: string = "Manual submission") => {
+    // Stop the test timer/guards
     setIsTestActive(false);
-    let score = 0;
-    questions.forEach(q => {
-      if (answers[q.id] === q.correctAnswer) {
-        calculatedScore += (maxMarks || 100) / questions.length;
-      }
-    });
+
+    // Calculate score
+    let calculatedScore = 0;
+    if (questions && questions.length > 0) {
+      questions.forEach(q => {
+        if (answers[q.id] === q.correctAnswer) {
+          calculatedScore += (maxMarks || 100) / questions.length;
+        }
+      });
+    }
+    // Ensure score is set so the submitted UI renders
     setScore(calculatedScore);
+
+    // Compute time spent
+    const timeSpentSeconds = Math.max(0, initialTime - timeLeft);
+
     try {
-      const response = await fetchWithAuth('http://eduyatrabackend.onrender.com/api/submit-test', {
+      // Use the same auth helper and HTTPS base as other requests
+      // IMPORTANT: The correct endpoint is /api/exams/submit-test (note the /exams prefix)
+      const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/submit-test`, {
         method: 'POST',
         body: JSON.stringify({
           examId,
@@ -328,28 +340,35 @@ const TestPage: React.FC = () => {
           answers,
           score: calculatedScore,
           reason,
-          timeSpentSeconds: timeSpentSeconds,
+          timeSpentSeconds,
           userId: localStorage.getItem('userId') || 'unknown',
         }),
       });
+      // fetchWithAuth ensures non-OK responses throw, but parse the body for logging
       const data = await response.json();
-      if (!response.ok) {
-        console.error('Failed to submit test results:', data);
-        throw new Error(data.error || 'Failed to submit test');
-      }
-      console.log('Test submitted successfully:', data);
+      console.log('✅ Test submitted successfully to backend:', data);
       setWarningMessage(`Test submitted! Your score: ${calculatedScore}/${maxMarks || 100}`);
       setShowWarning(true);
     } catch (err) {
-      console.error('Error submitting test:', err);
+      console.error('❌ Error submitting test to backend:', err);
       setWarningMessage(`Test submitted locally! Your score: ${calculatedScore}/${maxMarks || 100}. Failed to save to server.`);
       setShowWarning(true);
+    } finally {
+      // Exit fullscreen so the post-submit screen doesn't incorrectly show the fullscreen-required notice
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.error('Failed to exit fullscreen after submit:', err));
+      }
+      setIsFullScreen(false);
     }
   };
 
   const handleReturn = () => {
-    navigate(redirectPath);
-    window.location.reload();
+    // Navigate to the enrollment/practice page
+    navigate(redirectPath, { replace: true });
+    // Small delay to ensure backend has committed the changes, then force a full reload
+    setTimeout(() => {
+      window.location.href = redirectPath;
+    }, 500);
   };
 
   const formatTime = (seconds: number): string => {

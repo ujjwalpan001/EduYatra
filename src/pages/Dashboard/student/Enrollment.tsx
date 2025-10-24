@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,7 @@ interface AttendedTest {
 
 const Enrollment: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isTestStarting, setIsTestStarting] = useState<boolean>(false);
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [showDetails, setShowDetails] = useState<string | null>(null);
@@ -97,13 +98,16 @@ const Enrollment: React.FC = () => {
   const [attendedTests, setAttendedTests] = useState<AttendedTest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingAttended, setLoadingAttended] = useState<boolean>(true);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   // Fetch assigned (ongoing) exams
   useEffect(() => {
     const fetchExams = async () => {
       setLoading(true);
       try {
-        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/assigned');
+        // Add cache-busting timestamp to force fresh data
+        const timestamp = new Date().getTime();
+        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/assigned?_t=${timestamp}`);
         const data = await response.json();
         console.log('Assigned exams response:', data);
 
@@ -125,7 +129,19 @@ const Enrollment: React.FC = () => {
         }
 
         // Map backend exams to Exam interface
-        const mappedExams = data.exams.map((exam: any) => ({
+        const mappedExams = data.exams.map((exam: {
+          _id: string;
+          title?: string;
+          instructor?: string;
+          progress?: number;
+          deadline?: string;
+          number_of_questions_per_set?: number;
+          totalQuestions?: number;
+          completedQuestions?: number;
+          timeRemaining?: string;
+          category?: string;
+          duration_minutes?: number;
+        }) => ({
           _id: exam._id,
           title: exam.title || 'Untitled Exam',
           instructor: exam.instructor || 'Unknown',
@@ -149,7 +165,7 @@ const Enrollment: React.FC = () => {
     };
 
     fetchExams();
-  }, [navigate]);
+  }, [navigate, location.key, refreshKey]); // Refetch when location key changes (navigation) or manual refresh
 
   // Fetch attended tests
   useEffect(() => {
@@ -157,7 +173,9 @@ const Enrollment: React.FC = () => {
       setLoadingAttended(true);
       try {
         console.log('🔍 Fetching attended tests from backend...');
-        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/attended-tests');
+        // Add cache-busting timestamp to force fresh data
+        const timestamp = new Date().getTime();
+        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/attended-tests?_t=${timestamp}`);
         const data = await response.json();
         console.log('📥 Attended tests RAW response:', data);
         console.log('📊 Response status:', response.status, response.ok);
@@ -188,7 +206,7 @@ const Enrollment: React.FC = () => {
     };
 
     fetchAttendedTests();
-  }, []);
+  }, [location.key, refreshKey]); // Refetch when location key changes or manual refresh
 
   const handleContinueTest = (test: Pick<Exam, '_id' | 'title' | 'numberOfQuestionsPerSet' | 'duration_minutes'>) => {
     console.log('handleContinueTest called with test:', test); // Debug log
