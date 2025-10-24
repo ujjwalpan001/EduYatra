@@ -100,7 +100,6 @@ const TestPage: React.FC = () => {
   const [score, setScore] = useState<number | null>(null);
   const [fullscreenExitCount, setFullscreenExitCount] = useState<number>(0);
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
-  const [instructions, setInstructions] = useState<string>('');
 
   // Default questions as fallback
   const defaultQuestions: Question[] = [
@@ -153,10 +152,8 @@ const TestPage: React.FC = () => {
           options: shuffleArray(q.options),
         }));
         setQuestions(shuffledQuestions);
-        setInstructions(data.instructions || ''); // Store instructions from API
         setError(null);
         console.log('Questions fetched successfully with shuffled options:', shuffledQuestions);
-        console.log('Instructions received:', data.instructions);
       } catch (err: any) {
         console.error('Error fetching questions:', err);
         setError('Failed to load questions from the server. Using default questions.');
@@ -556,15 +553,6 @@ const TestPage: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {instructions && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Test Instructions
-              </h4>
-              <p className="text-sm text-blue-800 whitespace-pre-wrap">{instructions}</p>
-            </div>
-          )}
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium text-gray-800 mb-4">
