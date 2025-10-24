@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Globe, Clock, Check, X, Settings, Users, Calendar, Save, Eye } from "lucide-react";
+import { Globe, Clock, Check, X, Settings, Users, Calendar, Save, Eye, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast, Toaster } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -493,11 +493,29 @@ const ConductTestOnline: React.FC = () => {
     }
   };
 
-  const onSubmit = async (data: TestFormValues) => {
-    if (!selectedGroup) {
-      toast.error('Please select a group');
+  const handleDeleteExam = async (examId: string) => {
+    if (!confirm('Are you sure you want to delete this exam? This action cannot be undone.')) {
       return;
     }
+    try {
+      const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete exam');
+      }
+      setExams(exams.filter(exam => exam.id !== examId));
+      toast.success('Exam deleted successfully');
+      if (selectedExamId === examId) {
+        setSelectedExamId('');
+      }
+    } catch (error) {
+      toast.error(`Failed to delete exam: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const onSubmit = async (data: TestFormValues) => {
     if (!questionBankId) {
       toast.error('Please select a question bank');
       return;
@@ -514,14 +532,11 @@ const ConductTestOnline: React.FC = () => {
     const examData = {
       title: data.testName,
       description: data.instructions,
-      class_id: selectedGroup,
       question_bank_id: questionBankId,
       question_ids: selectedQuestions.map(q => q.id),
       number_of_sets: data.numberOfSets,
       number_of_questions_per_set: data.numberOfQuestionsPerSet,
       duration_minutes: data.duration,
-      start_time: new Date(),
-      end_time: new Date(Date.now() + data.duration * 60000),
       is_published: false,
       allow_review: true,
       shuffle_questions: true,
@@ -549,7 +564,6 @@ const ConductTestOnline: React.FC = () => {
       toast.success('Exam created successfully');
       reset();
       setSelectedQuestions([]);
-      setSelectedGroup('');
       setQuestionBankId('');
     } catch (error) {
       toast.error(`Failed to create exam: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -588,24 +602,6 @@ const ConductTestOnline: React.FC = () => {
                     {...register('testName')}
                   />
                   {errors.testName && <p className="text-sm text-destructive">{errors.testName.message}</p>}
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Assign to Group</h3>
-                  <div className="flex items-center gap-4">
-                    <Select value={selectedGroup} onValueChange={(value) => { console.log('Selected Group ID:', value); setSelectedGroup(value); }}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {groups.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1076,6 +1072,14 @@ const ConductTestOnline: React.FC = () => {
                     <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'view')}>View</Button>
                     <Button variant="outline" size="sm" onClick={() => handleSelectExam(test.id, 'manage')}>Manage</Button>
                     <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/common/monitor/${test.id}`)}>Monitor</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleDeleteExam(test.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))
