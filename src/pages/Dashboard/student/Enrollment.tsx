@@ -57,6 +57,7 @@ interface Test {
   duration: string;
   totalQuestions: number;
   maxMarks: number;
+  instructions?: string;
 }
 
 interface Exam {
@@ -73,6 +74,7 @@ interface Exam {
   category: string;
   duration_minutes: number;
   numberOfQuestionsPerSet: number; // Added for consistency
+  instructions?: string;
 }
 
 interface AttendedTest {
@@ -145,6 +147,7 @@ const Enrollment: React.FC = () => {
           expiringHours?: number;
           category?: string;
           duration_minutes?: number;
+          instructions?: string;
         }) => ({
           _id: exam._id,
           title: exam.title || 'Untitled Exam',
@@ -159,6 +162,7 @@ const Enrollment: React.FC = () => {
           category: exam.category || 'Unknown',
           duration_minutes: exam.duration_minutes || 60,
           numberOfQuestionsPerSet: exam.number_of_questions_per_set || exam.totalQuestions || 0,
+          instructions: exam.instructions || '',
         }));
         setExams(mappedExams);
       } catch (error) {
@@ -214,7 +218,7 @@ const Enrollment: React.FC = () => {
     fetchAttendedTests();
   }, [location.key, refreshKey]); // Refetch when location key changes or manual refresh
 
-  const handleContinueTest = (test: Pick<Exam, '_id' | 'title' | 'numberOfQuestionsPerSet' | 'duration_minutes'>) => {
+  const handleContinueTest = (test: Pick<Exam, '_id' | 'title' | 'numberOfQuestionsPerSet' | 'duration_minutes' | 'instructions'>) => {
     console.log('handleContinueTest called with test:', test); // Debug log
     setSelectedTest({
       examId: test._id,
@@ -222,6 +226,7 @@ const Enrollment: React.FC = () => {
       duration: test.duration_minutes.toString(),
       totalQuestions: test.numberOfQuestionsPerSet,
       maxMarks: test.numberOfQuestionsPerSet * 1, // Adjust marks per question as needed
+      instructions: test.instructions,
     });
     setIsTestStarting(true);
   };
@@ -521,6 +526,7 @@ const Enrollment: React.FC = () => {
           duration={selectedTest.duration}
           totalQuestions={selectedTest.totalQuestions}
           maxMarks={selectedTest.maxMarks}
+          instructions={selectedTest.instructions}
         />
       )}
     </Layout>

@@ -10,6 +10,7 @@ interface TestInstructionsModalProps {
   duration: string;
   totalQuestions: number;
   maxMarks: number;
+  instructions?: string; // Teacher's custom instructions
 }
 
 export function TestInstructionsModal({
@@ -20,6 +21,7 @@ export function TestInstructionsModal({
   duration,
   totalQuestions,
   maxMarks,
+  instructions,
 }: TestInstructionsModalProps) {
   const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -47,26 +49,25 @@ export function TestInstructionsModal({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Instructions</h3>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>Total duration of the test is {duration} minutes.</li>
-              <li>The test contains {totalQuestions} questions.</li>
-              <li>Maximum marks for this test are {maxMarks}.</li>
-              <li>There is no negative marking for wrong answers.</li>
-              <li>Do not refresh the page or close the browser during the test.</li>
-              <li>Use the navigation buttons to move between questions.</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Important</h3>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>Ensure you have a stable internet connection.</li>
-              <li>All questions are compulsory to attempt.</li>
-              <li>You cannot go back to previous sections once completed.</li>
-            </ul>
-          </div>
+          {instructions ? (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Instructions</h3>
+              <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 p-4 rounded-md">
+                {instructions}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Instructions</h3>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                <li>Total duration of the test is {duration} minutes.</li>
+                <li>The test contains {totalQuestions} questions.</li>
+                <li>Maximum marks for this test are {maxMarks}.</li>
+                <li>Do not refresh the page or close the browser during the test.</li>
+                <li>Use the navigation buttons to move between questions.</li>
+              </ul>
+            </div>
+          )}
 
           {countdown !== null ? (
             <div className="text-center py-6">
