@@ -98,6 +98,8 @@ const TestPage: React.FC = () => {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState<number | null>(null);
+  const [fullscreenExitCount, setFullscreenExitCount] = useState<number>(0);
+  const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
 
   // Default questions as fallback
   const defaultQuestions: Question[] = [
@@ -190,6 +192,7 @@ const TestPage: React.FC = () => {
       const isCurrentlyFullScreen = document.fullscreenElement !== null;
       setIsFullScreen(isCurrentlyFullScreen);
       if (!isCurrentlyFullScreen && isTestActive) {
+        setFullscreenExitCount(prev => prev + 1);
         setWarningMessage("Fullscreen mode is required! Please enable fullscreen to continue the test.");
         setShowWarning(true);
       }
@@ -197,6 +200,7 @@ const TestPage: React.FC = () => {
 
     const handleVisibilityChange = () => {
       if (document.hidden && isTestActive) {
+        setTabSwitchCount(prev => prev + 1);
         setWarningCount(prev => {
           const newCount = prev + 1;
           if (newCount >= 3) {
@@ -342,6 +346,8 @@ const TestPage: React.FC = () => {
           reason,
           timeSpentSeconds,
           userId: localStorage.getItem('userId') || 'unknown',
+          tabSwitches: tabSwitchCount,
+          fullscreenExits: fullscreenExitCount,
         }),
       });
       // fetchWithAuth ensures non-OK responses throw, but parse the body for logging

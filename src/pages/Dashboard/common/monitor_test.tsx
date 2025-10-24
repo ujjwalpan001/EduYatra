@@ -44,6 +44,7 @@ interface Student {
   proctoring: {
     webcamEnabled: boolean;
     tabSwitches: number;
+    fullscreenExits: number;
     suspiciousActivity: number;
     lastActivity: string;
   };
@@ -506,7 +507,12 @@ const MonitorTest: React.FC = () => {
                           )}
                           {student.proctoring.tabSwitches > 0 && (
                             <Badge variant="destructive" className="text-xs">
-                              {student.proctoring.tabSwitches} tabs
+                              🔄 {student.proctoring.tabSwitches} tab switches
+                            </Badge>
+                          )}
+                          {student.proctoring.fullscreenExits > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              ↗️ {student.proctoring.fullscreenExits} FS exits
                             </Badge>
                           )}
                         </div>
@@ -540,6 +546,43 @@ const MonitorTest: React.FC = () => {
                               <p className="font-medium">
                                 {student.answers.attempted}/{student.totalQuestions}
                               </p>
+                            </div>
+                          </div>
+                          
+                          {/* Proctoring Details */}
+                          <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
+                            <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-orange-600" />
+                              Proctoring Activity
+                            </p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                              <div>
+                                <p className="text-muted-foreground">Tab Switches</p>
+                                <p className={cn(
+                                  "font-bold text-lg",
+                                  student.proctoring.tabSwitches > 0 ? "text-red-600" : "text-green-600"
+                                )}>
+                                  {student.proctoring.tabSwitches}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Fullscreen Exits</p>
+                                <p className={cn(
+                                  "font-bold text-lg",
+                                  student.proctoring.fullscreenExits > 0 ? "text-red-600" : "text-green-600"
+                                )}>
+                                  {student.proctoring.fullscreenExits}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-muted-foreground">Total Violations</p>
+                                <p className={cn(
+                                  "font-bold text-lg",
+                                  student.proctoring.suspiciousActivity > 0 ? "text-red-600" : "text-green-600"
+                                )}>
+                                  {student.proctoring.suspiciousActivity}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           
