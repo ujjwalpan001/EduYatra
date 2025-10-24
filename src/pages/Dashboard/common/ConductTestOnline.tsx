@@ -104,6 +104,9 @@ interface Exam {
   numberOfQuestionsPerSet: number;
   instructions?: string;
   questionIds: string[];
+  isPublished?: boolean; // Track if exam is assigned to a group
+  isEnded?: boolean; // Track if exam has ended
+  endTime?: string; // Track when exam ends
 }
 
 interface SecuritySettings {
@@ -230,6 +233,9 @@ const ConductTestOnline: React.FC = () => {
           numberOfQuestionsPerSet: e.number_of_questions_per_set || 1,
           instructions: e.description || '',
           questionIds: e.question_ids || [],
+          isPublished: e.is_published || false, // Track if exam is assigned
+          isEnded: e.is_ended || false, // Track if exam has ended
+          endTime: e.end_time || '', // Track when exam ends
         })));
       } catch (error) {
         console.error('Fetch Data Error:', error);
@@ -311,6 +317,52 @@ const ConductTestOnline: React.FC = () => {
     }
   }, [selectedExamId, exams, resetEdit]);
 
+  // Check for ended exams and mark them automatically
+  useEffect(() => {
+    const checkEndedExams = () => {
+      const now = new Date();
+      const updatedExams = exams.map(exam => {
+        if (exam.isPublished && exam.endTime && !exam.isEnded) {
+          const endTime = new Date(exam.endTime);
+          if (now >= endTime) {
+            // Mark exam as ended
+            console.log(`Exam ${exam.title} has ended, marking as ended...`);
+            // Call backend to mark as ended
+            fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/end-test', {
+              method: 'POST',
+              body: JSON.stringify({ examId: exam.id }),
+            }).then(res => {
+              if (res.ok) {
+                console.log(`✅ Exam ${exam.title} marked as ended in backend`);
+              }
+            }).catch(err => {
+              console.error(`Failed to mark exam ${exam.title} as ended:`, err);
+            });
+            
+            return { ...exam, isEnded: true, status: 'Completed' as const };
+          }
+        }
+        return exam;
+      });
+
+      // Update state if any exam status changed
+      const hasChanges = updatedExams.some((exam, idx) => 
+        exam.isEnded !== exams[idx].isEnded
+      );
+      if (hasChanges) {
+        setExams(updatedExams);
+      }
+    };
+
+    // Check immediately
+    checkEndedExams();
+
+    // Check every minute
+    const interval = setInterval(checkEndedExams, 60000);
+
+    return () => clearInterval(interval);
+  }, [exams]);
+
   const handleAddToTest = (question: Question) => {
     setSelectedQuestions(prev => prev.some(q => q.id === question.id) ? prev : [...prev, question]);
   };
@@ -373,7 +425,7 @@ const ConductTestOnline: React.FC = () => {
       toast.success('Exam assigned to class successfully');
       console.log('Assign group success:', data);
       setExams(exams.map(exam =>
-        exam.id === examId ? { ...exam, status: 'Scheduled' } : exam
+        exam.id === examId ? { ...exam, status: 'Scheduled', isPublished: true } : exam
       ));
     } catch (error) {
       toast.error(`Failed to assign exam: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -773,24 +825,36 @@ const ConductTestOnline: React.FC = () => {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="examSelect">Select Exam *</Label>
-                  <Select value={selectedExamId} onValueChange={setSelectedExamId}>
-                    <SelectTrigger id="examSelect">
-                      <SelectValue placeholder={exams.length ? 'Select an exam' : 'No exams available'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {exams.length ? (
-                        exams.map(exam => (
-                          exam.id && (
-                            <SelectItem key={exam.id} value={exam.id}>
-                              {exam.title} ({exam.status})
-                            </SelectItem>
-                          )
-                        )).filter(Boolean)
-                      ) : (
-                        <div className="text-sm text-muted-foreground p-2">No exams available</div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={selectedExamId} onValueChange={setSelectedExamId}>
+                      <SelectTrigger id="examSelect" className="flex-1">
+                        <SelectValue placeholder={exams.length ? 'Select an exam' : 'No exams available'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {exams.length ? (
+                          exams.map(exam => (
+                            exam.id && (
+                              <SelectItem key={exam.id} value={exam.id}>
+                                {exam.title} ({exam.status})
+                              </SelectItem>
+                            )
+                          )).filter(Boolean)
+                        ) : (
+                          <div className="text-sm text-muted-foreground p-2">No exams available</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {selectedExamId && (
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleDeleteExam(selectedExamId)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                   {!exams.length && <p className="text-sm text-destructive">No exams available</p>}
                 </div>
 
@@ -1053,8 +1117,8 @@ const ConductTestOnline: React.FC = () => {
             <CardTitle>Active Tests</CardTitle>
           </CardHeader>
           <CardContent>
-            {exams.length ? (
-              exams.map((test, index) => (
+            {exams.filter(exam => exam.isPublished && !exam.isEnded).length ? (
+              exams.filter(exam => exam.isPublished && !exam.isEnded).map((test, index) => (
                 <div
                   key={test.id}
                   ref={(el) => { examRefs.current[test.id] = el; }}
@@ -1084,7 +1148,7 @@ const ConductTestOnline: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-destructive">No active or scheduled exams</p>
+              <p className="text-sm text-destructive">No active or scheduled exams. Please assign exams to groups to see them here.</p>
             )}
           </CardContent>
         </Card>
