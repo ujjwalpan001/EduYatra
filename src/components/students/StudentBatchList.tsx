@@ -82,6 +82,8 @@ export function StudentBatchList() {
   const [newStudentUserId, setNewStudentUserId] = useState("");
   const [pastedStudentData, setPastedStudentData] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [isSavingStudent, setIsSavingStudent] = useState(false);
   const { toast } = useToast();
 
   // Fetch institutes, courses, and classes on mount
@@ -368,6 +370,14 @@ export function StudentBatchList() {
       return;
     }
 
+    setIsCreatingBatch(true);
+    
+    // Show loading toast
+    toast({
+      title: "Creating batch...",
+      description: `Setting up "${batchName}" with ${students.length} student${students.length > 1 ? 's' : ''}. This may take a moment.`,
+    });
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -376,6 +386,7 @@ export function StudentBatchList() {
           description: "Please log in to continue.",
           variant: "destructive",
         });
+        setIsCreatingBatch(false);
         return;
       }
 
@@ -385,8 +396,15 @@ export function StudentBatchList() {
           description: "Batch editing is not supported in the backend yet.",
           variant: "destructive",
         });
+        setIsCreatingBatch(false);
       } else {
         // Create new batch
+        console.log('🚀 Creating batch with data:', {
+          class_name: batchName,
+          invitation_code: invitationCode,
+          students_count: students.length
+        });
+
         const response = await axios.post<ClassResponse>(
           "https://eduyatrabackend.onrender.com/api/classes/create",
           {
@@ -399,6 +417,8 @@ export function StudentBatchList() {
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        console.log('✅ Batch created successfully:', response.data);
 
         const newClass = response.data.class;
         setBatches(prev => [
@@ -417,9 +437,10 @@ export function StudentBatchList() {
             isExpanded: true,
           },
         ]);
+        
         toast({
-          title: "New batch added",
-          description: `${batchName} has been created.`,
+          title: "✅ Batch created successfully!",
+          description: `"${batchName}" has been created with ${students.length} student${students.length > 1 ? 's' : ''}. ${students.length > 0 ? 'New student accounts have been created automatically.' : ''}`,
         });
       }
 
@@ -434,11 +455,25 @@ export function StudentBatchList() {
       setPastedStudentData("");
       setUploadedFile(null);
     } catch (error: any) {
+      console.error('❌ Error creating batch:', error);
+      
+      let errorMessage = "Failed to create batch.";
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please check if all required fields are valid and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: error.response?.data?.error || "Failed to save batch.",
+        title: "❌ Failed to create batch",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingBatch(false);
     }
   };
 
@@ -462,6 +497,13 @@ export function StudentBatchList() {
       students = await addStudentsFromFile(students);
     }
 
+    setIsSavingStudent(true);
+    
+    toast({
+      title: "Adding students...",
+      description: `Adding ${students.length} student${students.length > 1 ? 's' : ''} to batch. Please wait...`,
+    });
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -470,6 +512,7 @@ export function StudentBatchList() {
           description: "Please log in to continue.",
           variant: "destructive",
         });
+        setIsSavingStudent(false);
         return;
       }
 
@@ -498,8 +541,8 @@ export function StudentBatchList() {
       );
 
       toast({
-        title: "Students added",
-        description: `Added ${students.length} student(s) to batch`,
+        title: "✅ Students added successfully!",
+        description: `Added ${students.length} student${students.length > 1 ? 's' : ''} to batch`,
       });
 
       setIsAddStudentDialogOpen(false);
@@ -510,11 +553,14 @@ export function StudentBatchList() {
       setUploadedFile(null);
       setEditingBatchId(null);
     } catch (error: any) {
+      console.error('❌ Error adding students:', error);
       toast({
-        title: "Error",
+        title: "❌ Failed to add students",
         description: error.response?.data?.error || "Failed to add students.",
         variant: "destructive",
       });
+    } finally {
+      setIsSavingStudent(false);
     }
   };
 
@@ -849,11 +895,22 @@ export function StudentBatchList() {
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
+              disabled={isCreatingBatch}
             >
               Cancel
             </Button>
-            <Button onClick={saveBatch}>
-              {editingBatchId ? 'Save Changes' : 'Create Batch'}
+            <Button 
+              onClick={saveBatch}
+              disabled={isCreatingBatch}
+            >
+              {isCreatingBatch ? (
+                <>
+                  <span className="mr-2">⏳</span>
+                  Creating...
+                </>
+              ) : (
+                editingBatchId ? 'Save Changes' : 'Create Batch'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -926,11 +983,22 @@ export function StudentBatchList() {
                 setUploadedFile(null);
                 setEditingBatchId(null);
               }}
+              disabled={isSavingStudent}
             >
               Cancel
             </Button>
-            <Button onClick={saveStudentToBatch}>
-              Add Students
+            <Button 
+              onClick={saveStudentToBatch}
+              disabled={isSavingStudent}
+            >
+              {isSavingStudent ? (
+                <>
+                  <span className="mr-2">⏳</span>
+                  Adding...
+                </>
+              ) : (
+                'Add Students'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
