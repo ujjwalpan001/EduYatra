@@ -144,6 +144,7 @@ const ConductTestOnline: React.FC = () => {
   const [schedule, setSchedule] = useState<ExamSchedule>({ startTime: '', endTime: '' });
   const [timeLimit, setTimeLimit] = useState('60');
   const [customTimeLimit, setCustomTimeLimit] = useState('');
+  const [expiringHours, setExpiringHours] = useState('1');
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isManageExamOpen, setIsManageExamOpen] = useState(true);
   const [showQuestionSets, setShowQuestionSets] = useState(false);
@@ -348,11 +349,21 @@ const ConductTestOnline: React.FC = () => {
       console.error('handleAssignGroup: Missing examId or groupId', { examId, groupId });
       return;
     }
+    
+    const expiringHoursValue = parseFloat(expiringHours);
+    if (isNaN(expiringHoursValue) || expiringHoursValue < 0.5 || expiringHoursValue > 168) {
+      toast.error('Expiring time must be between 0.5 and 168 hours');
+      return;
+    }
+    
     try {
-      console.log(`Assigning exam ${examId} to group ${groupId}`);
+      console.log(`Assigning exam ${examId} to group ${groupId} with expiring hours: ${expiringHoursValue}`);
       const res = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/assign-group`, {
         method: 'POST',
-        body: JSON.stringify({ groupId }),
+        body: JSON.stringify({ 
+          groupId,
+          expiring_hours: expiringHoursValue 
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -614,6 +625,20 @@ const ConductTestOnline: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="numberOfSets">Number of Sets *</Label>
+                    <Input
+                      id="numberOfSets"
+                      type="number"
+                      placeholder="1"
+                      className={cn(errors.numberOfSets && 'border-destructive')}
+                      {...register('numberOfSets')}
+                    />
+                    {errors.numberOfSets && <p className="text-sm text-destructive">{errors.numberOfSets.message}</p>}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="totalQuestions">Total Questions</Label>
                     <Input
                       id="totalQuestions"
@@ -628,18 +653,6 @@ const ConductTestOnline: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="numberOfSets">Number of Sets *</Label>
-                    <Input
-                      id="numberOfSets"
-                      type="number"
-                      placeholder="1"
-                      className={cn(errors.numberOfSets && 'border-destructive')}
-                      {...register('numberOfSets')}
-                    />
-                    {errors.numberOfSets && <p className="text-sm text-destructive">{errors.numberOfSets.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="numberOfQuestionsPerSet">Questions per Set *</Label>
                     <Input
                       id="numberOfQuestionsPerSet"
@@ -649,6 +662,11 @@ const ConductTestOnline: React.FC = () => {
                       {...register('numberOfQuestionsPerSet')}
                     />
                     {errors.numberOfQuestionsPerSet && <p className="text-sm text-destructive">{errors.numberOfQuestionsPerSet.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>&nbsp;</Label>
+                    <div className="h-10"></div>
                   </div>
                 </div>
 
@@ -782,6 +800,28 @@ const ConductTestOnline: React.FC = () => {
 
                 {selectedExamId && (
                   <>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Set Expiring Time</h3>
+                      <div className="space-y-2">
+                        <Label htmlFor="manageExpiringHours">Expiring Time (hours) *</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            id="manageExpiringHours"
+                            type="number"
+                            step="0.5"
+                            min="0.5"
+                            max="168"
+                            value={expiringHours}
+                            onChange={(e) => setExpiringHours(e.target.value)}
+                            placeholder="1"
+                            className="pl-10"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Test will expire after this time from start (0.5 to 168 hours)</p>
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Assign to Group</h3>
                       <Select value={selectedGroup} onValueChange={setSelectedGroup}>
