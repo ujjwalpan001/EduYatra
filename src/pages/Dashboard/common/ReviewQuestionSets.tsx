@@ -250,7 +250,12 @@ const ReviewQuestionSets = () => {
             subject: firstQ.subject,
             questionType: firstQ.question_type,
             correctOption: !!firstQ.correct_option_katex,
-            incorrectOptions: firstQ.incorrect_option_katex?.length || 0
+            incorrectOptions: firstQ.incorrect_option_katex?.length || 0,
+            hasSolutionLatex: !!firstQ.solution_latex,
+            hasKatexSolution: !!firstQ.katex_solution,
+            solutionLatexLength: firstQ.solution_latex?.length || 0,
+            katexSolutionLength: firstQ.katex_solution?.length || 0,
+            solutionLatexPreview: firstQ.solution_latex?.substring(0, 50) || 'NO SOLUTION'
           });
         }
         
@@ -758,7 +763,7 @@ const ReviewQuestionSets = () => {
                                         {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
                                       </Badge>
                                     </div>
-                                    <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed">
+                                    <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed break-words whitespace-normal">
                                       {question.latex_code ? (
                                         <KatexRenderer>
                                           {question.latex_code}
@@ -798,7 +803,7 @@ const ReviewQuestionSets = () => {
                                       </div>
                                       <span className="font-semibold text-green-700 dark:text-green-300">Correct Answer</span>
                                     </div>
-                                    <div className="text-base text-green-900 dark:text-green-100 ml-8">
+                                    <div className="text-base text-green-900 dark:text-green-100 ml-8 break-words whitespace-normal">
                                       {question.correct_option_latex ? (
                                         <KatexRenderer>
                                           {question.correct_option_latex}
@@ -821,7 +826,7 @@ const ReviewQuestionSets = () => {
                                           <div className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                             ✗
                                           </div>
-                                          <div className="text-base text-red-900 dark:text-red-100 flex-1">
+                                          <div className="text-base text-red-900 dark:text-red-100 flex-1 break-words whitespace-normal">
                                             {question.incorrect_option_latex && question.incorrect_option_latex[idx] ? (
                                               <KatexRenderer>
                                                 {question.incorrect_option_latex[idx]}
@@ -838,7 +843,17 @@ const ReviewQuestionSets = () => {
                               </div>
                               
                               {/* Solution Section */}
-                              {(question.solution_latex || question.katex_solution) && (
+                              {(() => {
+                                const hasSolution = question.solution_latex || question.katex_solution;
+                                console.log(`🔍 Question ${question._id} solution check:`, {
+                                  hasSolution,
+                                  solution_latex: question.solution_latex,
+                                  katex_solution: question.katex_solution,
+                                  solutionLatexLength: question.solution_latex?.length || 0,
+                                  katexSolutionLength: question.katex_solution?.length || 0
+                                });
+                                return hasSolution;
+                              })() && (
                                 <div className="p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30">
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="h-7 w-7 rounded-full bg-purple-500 flex items-center justify-center text-white text-lg">
@@ -846,7 +861,7 @@ const ReviewQuestionSets = () => {
                                     </div>
                                     <span className="font-bold text-lg text-purple-700 dark:text-purple-300">Solution</span>
                                   </div>
-                                  <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed">
+                                  <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed break-words whitespace-normal">
                                     {question.solution_latex ? (
                                       <KatexRenderer>
                                         {question.solution_latex}
