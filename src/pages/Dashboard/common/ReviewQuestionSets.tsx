@@ -341,6 +341,7 @@ const ReviewQuestionSets = () => {
   // Filter questions based on question search query
   const filteredQuestions = previewQuestions.filter(
     (question) =>
+      (question.latex_code && question.latex_code.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
       (question.katex_code && question.katex_code.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
       (question.subject && question.subject.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
       (question.topic && question.topic.toLowerCase().includes(questionSearchQuery.toLowerCase()))
@@ -597,7 +598,7 @@ const ReviewQuestionSets = () => {
                                   <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                                     <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Preview:</p>
                                     <div className="text-base">
-                                      <KatexRenderer isRawLatex={true}>
+                                      <KatexRenderer>
                                         {editedQuestion.latex_code}
                                       </KatexRenderer>
                                     </div>
@@ -664,7 +665,7 @@ const ReviewQuestionSets = () => {
                                   <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-green-200 dark:border-green-800">
                                     <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Preview:</p>
                                     <div className="text-sm">
-                                      <KatexRenderer isRawLatex={true}>
+                                      <KatexRenderer>
                                         {editedQuestion.correct_option_latex}
                                       </KatexRenderer>
                                     </div>
@@ -687,7 +688,7 @@ const ReviewQuestionSets = () => {
                                       <div className="p-2 bg-white dark:bg-gray-900 rounded border-2 border-gray-200 dark:border-gray-800">
                                         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
                                         <div className="text-sm">
-                                          <KatexRenderer isRawLatex={true}>
+                                          <KatexRenderer>
                                             {option}
                                           </KatexRenderer>
                                         </div>
@@ -713,7 +714,7 @@ const ReviewQuestionSets = () => {
                                   <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-purple-200 dark:border-purple-800">
                                     <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">Preview:</p>
                                     <div className="text-sm">
-                                      <KatexRenderer isRawLatex={true}>
+                                      <KatexRenderer>
                                         {editedQuestion.solution_latex}
                                       </KatexRenderer>
                                     </div>
@@ -759,7 +760,7 @@ const ReviewQuestionSets = () => {
                                     </div>
                                     <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed">
                                       {question.latex_code ? (
-                                        <KatexRenderer isRawLatex={true}>
+                                        <KatexRenderer>
                                           {question.latex_code}
                                         </KatexRenderer>
                                       ) : question.katex_code ? (
@@ -799,7 +800,7 @@ const ReviewQuestionSets = () => {
                                     </div>
                                     <div className="text-base text-green-900 dark:text-green-100 ml-8">
                                       {question.correct_option_latex ? (
-                                        <KatexRenderer isRawLatex={true}>
+                                        <KatexRenderer>
                                           {question.correct_option_latex}
                                         </KatexRenderer>
                                       ) : question.correct_option_katex ? (
@@ -822,7 +823,7 @@ const ReviewQuestionSets = () => {
                                           </div>
                                           <div className="text-base text-red-900 dark:text-red-100 flex-1">
                                             {question.incorrect_option_latex && question.incorrect_option_latex[idx] ? (
-                                              <KatexRenderer isRawLatex={true}>
+                                              <KatexRenderer>
                                                 {question.incorrect_option_latex[idx]}
                                               </KatexRenderer>
                                             ) : question.incorrect_option_katex && question.incorrect_option_katex[idx] ? (
@@ -847,7 +848,7 @@ const ReviewQuestionSets = () => {
                                   </div>
                                   <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed">
                                     {question.solution_latex ? (
-                                      <KatexRenderer isRawLatex={true}>
+                                      <KatexRenderer>
                                         {question.solution_latex}
                                       </KatexRenderer>
                                     ) : question.katex_solution ? (

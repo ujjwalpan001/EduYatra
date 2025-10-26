@@ -28,9 +28,14 @@ export const renderKatex = (
 ): React.ReactNode => {
   if (!content) return null;
 
-  // If marked as raw LaTeX or content looks like LaTeX and no delimiters, render as block math
-  if (!isInline && isRawLatex || (isLatexLike(content) && !/\$\$.*?\$\$|\$.*?\$/.test(content))) {
-    return <BlockMath math={content} />;
+  // If marked as raw LaTeX, render directly as math
+  if (isRawLatex) {
+    return isInline ? <InlineMath math={content} /> : <BlockMath math={content} />;
+  }
+
+  // If content looks like LaTeX and has no delimiters, treat as raw LaTeX
+  if (isLatexLike(content) && !/\$\$.*?\$\$|\$.*?\$/.test(content)) {
+    return isInline ? <InlineMath math={content} /> : <BlockMath math={content} />;
   }
 
   // Otherwise, split and process delimiters as before
