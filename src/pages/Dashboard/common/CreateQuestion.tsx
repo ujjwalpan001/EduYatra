@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Save, Eye, X, Upload } from "lucide-react";
+import { Plus, Save, Eye, X, Upload, Check, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import 'katex/dist/katex.min.css';
 import { renderKatex, KatexRenderer } from '@/lib/katex-rendering';
 import ReactDOMServer from 'react-dom/server';
 import { toast } from "sonner";
 import { jwtDecode } from 'jwt-decode';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const subjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
 const questionSubjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
@@ -36,6 +38,24 @@ interface FormData {
   questionBankName: string;
 }
 
+interface ParsedQuestion {
+  question: string;
+  correctOption: string;
+  incorrectOptions: string[];
+  selected: boolean;
+}
+
+interface TemplateFormData {
+  subject: string;
+  difficulty: string;
+  questionType: string;
+  topic: string;
+  courseCode: string;
+  questionBankName: string;
+  instituteName: string;
+  visibility: 'public' | 'private';
+}
+
 const CreateQuestion = () => {
   const [formData, setFormData] = useState<FormData>({
     question: '',
@@ -56,6 +76,22 @@ const CreateQuestion = () => {
 
   const [questionBanks, setQuestionBanks] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [templateText, setTemplateText] = useState('');
+  const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestion[]>([]);
+  const [showParsedQuestions, setShowParsedQuestions] = useState(false);
+  const [templateFormData, setTemplateFormData] = useState<TemplateFormData>({
+    subject: '',
+    difficulty: 'Medium',
+    questionType: 'MCQ',
+    topic: '',
+    courseCode: '',
+    questionBankName: '',
+    instituteName: '',
+    visibility: 'public'
+  });
   const [institutes, setInstitutes] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -136,6 +172,151 @@ const CreateQuestion = () => {
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Parse template text into questions
+  const parseTemplate = () => {
+    const lines = templateText.trim().split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      toast.error("❌ Please enter questions in the template");
+      return;
+    }
+
+    if (lines.length % 5 !== 0) {
+      toast.error("❌ Invalid format. Each question must have exactly 5 lines:\n1. Question\n2. Correct Answer\n3-5. Three Incorrect Answers");
+      return;
+    }
+
+    // Validate template form fields
+    if (!templateFormData.subject.trim()) {
+      toast.error("❌ Please fill in Manage Details first!");
+      setShowTemplateForm(true);
+      return;
+    }
+    if (!templateFormData.questionBankName.trim()) {
+      toast.error("❌ Please fill in Manage Details first!");
+      setShowTemplateForm(true);
+      return;
+    }
+    if (!templateFormData.courseCode.trim()) {
+      toast.error("❌ Please fill in Manage Details first!");
+      setShowTemplateForm(true);
+      return;
+    }
+    if (!templateFormData.instituteName.trim()) {
+      toast.error("❌ Please fill in Manage Details first!");
+      setShowTemplateForm(true);
+      return;
+    }
+
+    const questions: ParsedQuestion[] = [];
+    for (let i = 0; i < lines.length; i += 5) {
+      questions.push({
+        question: lines[i],
+        correctOption: lines[i + 1],
+        incorrectOptions: [lines[i + 2], lines[i + 3], lines[i + 4]],
+        selected: true // All selected by default
+      });
+    }
+
+    setParsedQuestions(questions);
+    setShowParsedQuestions(true);
+    toast.success(`✅ Parsed ${questions.length} question(s) successfully!`);
+  };
+
+  // Toggle selection of a question
+  const toggleQuestionSelection = (index: number) => {
+    setParsedQuestions(prev => 
+      prev.map((q, i) => i === index ? { ...q, selected: !q.selected } : q)
+    );
+  };
+
+  // Save selected questions directly
+  const saveFromTemplate = async () => {
+    const selectedQuestions = parsedQuestions.filter(q => q.selected);
+
+    if (selectedQuestions.length === 0) {
+      toast.error("❌ Please select at least one question to save");
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error("⚠️ Please log in to create questions");
+      return;
+    }
+
+    try {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const q of selectedQuestions) {
+        const questionData = {
+          latex_code: q.question,
+          subject: templateFormData.subject,
+          difficulty_rating: templateFormData.difficulty,
+          correct_answer: q.correctOption,
+          incorrect_answers: q.incorrectOptions,
+          question_bank: templateFormData.questionBankName,
+          course_code: templateFormData.courseCode,
+          visibility: templateFormData.visibility,
+          topic: templateFormData.topic,
+          is_default: false,
+          solution: '',
+          question_type: templateFormData.questionType,
+          institute: templateFormData.instituteName,
+          created_by: userId,
+        };
+
+        try {
+          const response = await fetch("https://eduyatrabackend.onrender.com/api/questions/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(questionData)
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`✅ Successfully created ${successCount} question(s)!`);
+      }
+      if (failCount > 0) {
+        toast.error(`❌ Failed to create ${failCount} question(s)`);
+      }
+
+      // Close modal and reset
+      setIsTemplateModalOpen(false);
+      setTemplateText('');
+      setParsedQuestions([]);
+      setShowParsedQuestions(false);
+      setShowTemplateForm(false);
+      setTemplateFormData({
+        subject: '',
+        difficulty: 'Medium',
+        questionType: 'MCQ',
+        topic: '',
+        courseCode: '',
+        questionBankName: '',
+        instituteName: '',
+        visibility: 'public'
+      });
+
+    } catch (error) {
+      console.error("Error saving questions:", error);
+      toast.error("❌ Failed to save questions");
     }
   };
 
@@ -656,7 +837,13 @@ const CreateQuestion = () => {
                     )}
                   </div>
                   
-                  <Button variant="outline" className="w-full" type="button">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    type="button"
+                    onClick={() => setIsPreviewModalOpen(true)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
                     Preview Full Screen
                   </Button>
                 </div>
@@ -669,23 +856,394 @@ const CreateQuestion = () => {
                 <CardDescription>Common actions for this question</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" type="button">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Another Question
-                </Button>
-                <Button variant="outline" className="w-full justify-start" type="button">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  type="button"
+                  onClick={() => setIsTemplateModalOpen(true)}
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Import from Template
-                </Button>
-                <Button variant="outline" className="w-full justify-start" type="button">
-                  <Save className="h-4 w-4 mr-2" />
-                  Save as Draft
                 </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       </form>
+
+      {/* Import from Template Modal */}
+      <Dialog open={isTemplateModalOpen} onOpenChange={setIsTemplateModalOpen}>
+        <DialogContent className={`${showParsedQuestions ? 'max-w-[95vw] max-h-[95vh]' : 'max-w-[90vw] max-h-[95vh]'} overflow-hidden flex flex-col`}>
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Import Questions from Template</DialogTitle>
+            <DialogDescription>
+              {!showParsedQuestions ? (
+                <>
+                  Fill in the details below and paste your questions. Each question must have 5 lines:
+                  <br />
+                  <strong>Line 1:</strong> Question text (supports LaTeX)
+                  <br />
+                  <strong>Line 2:</strong> Correct answer
+                  <br />
+                  <strong>Line 3-5:</strong> Three incorrect answers
+                </>
+              ) : (
+                <>Review and select questions to import. LaTeX expressions will be rendered.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4 flex-1 overflow-y-auto">
+            {!showParsedQuestions ? (
+              <>
+                {/* Manage Details Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => setShowTemplateForm(!showTemplateForm)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Manage Question Details
+                  </span>
+                  {showTemplateForm ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+
+                {/* Template Form Fields - Collapsible */}
+                {showTemplateForm && (
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border-2 border-primary/20 animate-in slide-in-from-top-2">
+                    <div className="space-y-2">
+                      <Label>Subject *</Label>
+                      <Input
+                        value={templateFormData.subject}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, subject: e.target.value }))}
+                        placeholder="Enter subject (e.g., Mathematics, Physics)"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Difficulty Level *</Label>
+                      <Input
+                        value={templateFormData.difficulty}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, difficulty: e.target.value }))}
+                        placeholder="Enter difficulty (e.g., Easy, Medium, Hard)"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Question Type *</Label>
+                      <Input
+                        value={templateFormData.questionType}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, questionType: e.target.value }))}
+                        placeholder="Enter type (e.g., MCQ, True/False)"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Topic</Label>
+                      <Input
+                        value={templateFormData.topic}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, topic: e.target.value }))}
+                        placeholder="Enter topic"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Course Code *</Label>
+                      <Input
+                        value={templateFormData.courseCode}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, courseCode: e.target.value }))}
+                        placeholder="Enter course code"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Question Bank *</Label>
+                      <Input
+                        value={templateFormData.questionBankName}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, questionBankName: e.target.value }))}
+                        placeholder="Enter question bank name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Institute Name *</Label>
+                      <Input
+                        value={templateFormData.instituteName}
+                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, instituteName: e.target.value }))}
+                        placeholder="Enter institute name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Visibility *</Label>
+                      <div className="flex items-center gap-3 h-10">
+                        <Button
+                          type="button"
+                          variant={templateFormData.visibility === 'public' ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setTemplateFormData(prev => ({ ...prev, visibility: 'public' }))}
+                        >
+                          Public
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={templateFormData.visibility === 'private' ? 'default' : 'outline'}
+                          className="flex-1"
+                          onClick={() => setTemplateFormData(prev => ({ ...prev, visibility: 'private' }))}
+                        >
+                          Private
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="template">Paste Questions Here *</Label>
+                  <Textarea
+                    id="template"
+                    placeholder="Solve $\int x^2 dx$
+$\frac{x^3}{3} + C$
+$x^3 + C$
+$\frac{x^2}{2} + C$
+$2x + C$"
+                    value={templateText}
+                    onChange={(e) => setTemplateText(e.target.value)}
+                    className="min-h-[400px] font-mono text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsTemplateModalOpen(false);
+                      setTemplateText('');
+                      setShowTemplateForm(false);
+                      setTemplateFormData({
+                        subject: '',
+                        difficulty: 'Medium',
+                        questionType: 'MCQ',
+                        topic: '',
+                        courseCode: '',
+                        questionBankName: '',
+                        instituteName: '',
+                        visibility: 'public'
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={parseTemplate}>
+                    <Check className="h-4 w-4 mr-2" />
+                    Parse Questions
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col h-full space-y-4">
+                  <div className="flex items-center justify-between flex-shrink-0">
+                    <h3 className="text-lg font-semibold">
+                      Parsed Questions ({parsedQuestions.filter(q => q.selected).length} selected)
+                    </h3>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setShowParsedQuestions(false);
+                        setParsedQuestions([]);
+                      }}
+                    >
+                      Edit Template
+                    </Button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                    {parsedQuestions.map((q, index) => (
+                      <Card key={index} className={`p-5 ${q.selected ? 'border-primary border-2' : 'border-muted'}`}>
+                        <div className="flex items-start gap-4">
+                          <Checkbox
+                            checked={q.selected}
+                            onCheckedChange={() => toggleQuestionSelection(index)}
+                            className="mt-1.5 flex-shrink-0"
+                          />
+                          <div className="flex-1 space-y-4 min-w-0">
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <span className="font-bold text-base text-primary flex-shrink-0">Q{index + 1}.</span>
+                                <div className="font-medium text-base leading-relaxed w-full overflow-x-auto">
+                                  <KatexRenderer>{q.question}</KatexRenderer>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-2.5 pl-6">
+                              <div className="flex items-start gap-3 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-900">
+                                <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                <div className="text-sm text-green-800 dark:text-green-300 font-medium flex-1 overflow-x-auto">
+                                  <KatexRenderer isInline>{q.correctOption}</KatexRenderer>
+                                </div>
+                              </div>
+                              {q.incorrectOptions.map((option, i) => (
+                                <div key={i} className="flex items-start gap-3 p-2 bg-muted/30 rounded-md">
+                                  <X className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                  <div className="text-sm text-muted-foreground flex-1 overflow-x-auto">
+                                    <KatexRenderer isInline>{option}</KatexRenderer>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 justify-end pt-4 border-t flex-shrink-0">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsTemplateModalOpen(false);
+                        setTemplateText('');
+                        setParsedQuestions([]);
+                        setShowParsedQuestions(false);
+                        setShowTemplateForm(false);
+                        setTemplateFormData({
+                        subject: '',
+                        difficulty: 'Medium',
+                        questionType: 'MCQ',
+                        topic: '',
+                        courseCode: '',
+                        questionBankName: '',
+                        instituteName: '',
+                        visibility: 'public'
+                      });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={saveFromTemplate}
+                    disabled={!parsedQuestions.some(q => q.selected)}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Selected ({parsedQuestions.filter(q => q.selected).length})
+                  </Button>
+                </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full Screen Preview Modal */}
+      <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>Question Preview</DialogTitle>
+            <DialogDescription>
+              Full screen preview of how the question will appear to students
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto pr-2">
+            <div className="space-y-6">
+              {formData.question ? (
+                <>
+                  <div className="p-6 border-2 rounded-lg bg-background">
+                    <div className="space-y-6">
+                      <div className="prose max-w-none">
+                        <h3 className="text-xl font-bold mb-4">Question:</h3>
+                        <div className="text-lg leading-relaxed">
+                          <KatexRenderer>{formData.question}</KatexRenderer>
+                        </div>
+                      </div>
+
+                      {previewUrl && (
+                        <div className="mt-4">
+                          <img 
+                            src={previewUrl} 
+                            alt="Question" 
+                            className="max-w-full h-auto rounded-lg border"
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-3 mt-6">
+                        <h4 className="text-lg font-semibold mb-3">Options:</h4>
+                        
+                        {formData.correctOption && (
+                          <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border-2 border-green-200 dark:border-green-900">
+                            <span className="text-green-600 dark:text-green-400 font-bold text-lg flex-shrink-0">A.</span>
+                            <div className="text-base flex-1">
+                              <KatexRenderer>{formData.correctOption}</KatexRenderer>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {formData.incorrectOptions.map((option, index) => (
+                          option && (
+                            <div key={index} className="flex items-start gap-3 p-4 border-2 rounded-lg bg-muted/30">
+                              <span className="text-muted-foreground font-bold text-lg flex-shrink-0">
+                                {String.fromCharCode(66 + index)}.
+                              </span>
+                              <div className="text-base flex-1">
+                                <KatexRenderer>{option}</KatexRenderer>
+                              </div>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                      
+                      {formData.solution && (
+                        <div className="mt-6 pt-6 border-t-2">
+                          <h4 className="text-lg font-semibold mb-3">Solution:</h4>
+                          <div className="text-base leading-relaxed">
+                            <KatexRenderer>{formData.solution}</KatexRenderer>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-6 pt-6 border-t-2 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-semibold">Subject:</span> {formData.subject || 'Not specified'}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Difficulty:</span> {formData.difficulty}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Question Type:</span> {formData.questionType}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Topic:</span> {formData.topic || 'Not specified'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-lg text-muted-foreground">
+                    No question content to preview. Please fill in the question field.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t flex-shrink-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPreviewModalOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
