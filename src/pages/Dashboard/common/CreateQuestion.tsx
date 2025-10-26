@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Save, Eye, X, Upload, Check, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Save, Eye, X, Upload, Check, Loader2, Settings, ChevronDown, ChevronUp } from "lucide-react";
 import 'katex/dist/katex.min.css';
 import { renderKatex, KatexRenderer } from '@/lib/katex-rendering';
 import ReactDOMServer from 'react-dom/server';
@@ -45,17 +45,6 @@ interface ParsedQuestion {
   selected: boolean;
 }
 
-interface TemplateFormData {
-  subject: string;
-  difficulty: string;
-  questionType: string;
-  topic: string;
-  courseCode: string;
-  questionBankName: string;
-  instituteName: string;
-  visibility: 'public' | 'private';
-}
-
 const CreateQuestion = () => {
   const [formData, setFormData] = useState<FormData>({
     question: '',
@@ -78,24 +67,15 @@ const CreateQuestion = () => {
   const [courses, setCourses] = useState<string[]>([]);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [templateText, setTemplateText] = useState('');
   const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestion[]>([]);
   const [showParsedQuestions, setShowParsedQuestions] = useState(false);
-  const [templateFormData, setTemplateFormData] = useState<TemplateFormData>({
-    subject: '',
-    difficulty: 'Medium',
-    questionType: 'MCQ',
-    topic: '',
-    courseCode: '',
-    questionBankName: '',
-    instituteName: '',
-    visibility: 'public'
-  });
   const [institutes, setInstitutes] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
 
   // Authenticate user and fetch data
   useEffect(() => {
@@ -189,24 +169,24 @@ const CreateQuestion = () => {
       return;
     }
 
-    // Validate template form fields
-    if (!templateFormData.subject.trim()) {
-      toast.error("❌ Please fill in Manage Details first!");
+    // Validate that main form fields are filled
+    if (!formData.subject.trim()) {
+      toast.error("❌ Please fill in Subject in the question details!");
       setShowTemplateForm(true);
       return;
     }
-    if (!templateFormData.questionBankName.trim()) {
-      toast.error("❌ Please fill in Manage Details first!");
+    if (!formData.questionBankName.trim()) {
+      toast.error("❌ Please fill in Question Bank Name in the question details!");
       setShowTemplateForm(true);
       return;
     }
-    if (!templateFormData.courseCode.trim()) {
-      toast.error("❌ Please fill in Manage Details first!");
+    if (!formData.courseCode.trim()) {
+      toast.error("❌ Please fill in Course Code in the question details!");
       setShowTemplateForm(true);
       return;
     }
-    if (!templateFormData.instituteName.trim()) {
-      toast.error("❌ Please fill in Manage Details first!");
+    if (!formData.instituteName.trim()) {
+      toast.error("❌ Please fill in Institute Name in the question details!");
       setShowTemplateForm(true);
       return;
     }
@@ -248,30 +228,44 @@ const CreateQuestion = () => {
       return;
     }
 
+    setIsSaving(true);
+    toast.loading(`Creating ${selectedQuestions.length} question(s)...`, { id: 'saving-template' });
+
     try {
       let successCount = 0;
       let failCount = 0;
 
-      for (const q of selectedQuestions) {
+      for (let i = 0; i < selectedQuestions.length; i++) {
+        const q = selectedQuestions[i];
+        toast.loading(`Creating question ${i + 1} of ${selectedQuestions.length}...`, { id: 'saving-template' });
+        
         const questionData = {
           latex_code: q.question,
-          subject: templateFormData.subject,
-          difficulty_rating: templateFormData.difficulty,
-          correct_answer: q.correctOption,
-          incorrect_answers: q.incorrectOptions,
-          question_bank: templateFormData.questionBankName,
-          course_code: templateFormData.courseCode,
-          visibility: templateFormData.visibility,
-          topic: templateFormData.topic,
-          is_default: false,
-          solution: '',
-          question_type: templateFormData.questionType,
-          institute: templateFormData.instituteName,
-          created_by: userId,
+          katex_code: ReactDOMServer.renderToString(<>{renderKatex(q.question)}</>),
+          subject: formData.subject,
+          level: formData.difficulty,
+          difficulty_rating: 0,
+          correct_option_latex: q.correctOption,
+          correct_option_katex: ReactDOMServer.renderToString(<>{renderKatex(q.correctOption)}</>),
+          incorrect_option_latex: q.incorrectOptions,
+          incorrect_option_katex: q.incorrectOptions.map(option => ReactDOMServer.renderToString(<>{renderKatex(option)}</>)),
+          courseCode: formData.courseCode,
+          visibility: formData.visibility,
+          topic: formData.topic,
+          question_type: formData.questionType,
+          instituteName: formData.instituteName,
+          questionBankName: formData.questionBankName,
+          image: '',
+          solution_latex: '',
+          katex_solution: '',
+          Sub_topic: '',
+          bloom_level: '',
+          question_stats: {},
+          updated_at: new Date()
         };
 
         try {
-          const response = await fetch("https://eduyatrabackend.onrender.com/api/questions/create", {
+          const response = await fetch("https://eduyatrabackend.onrender.com/api/questions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -283,12 +277,17 @@ const CreateQuestion = () => {
           if (response.ok) {
             successCount++;
           } else {
+            const errorData = await response.json();
+            console.error('Failed to save question:', errorData);
             failCount++;
           }
         } catch (error) {
+          console.error('Error saving question:', error);
           failCount++;
         }
       }
+
+      toast.dismiss('saving-template');
 
       if (successCount > 0) {
         toast.success(`✅ Successfully created ${successCount} question(s)!`);
@@ -302,21 +301,13 @@ const CreateQuestion = () => {
       setTemplateText('');
       setParsedQuestions([]);
       setShowParsedQuestions(false);
-      setShowTemplateForm(false);
-      setTemplateFormData({
-        subject: '',
-        difficulty: 'Medium',
-        questionType: 'MCQ',
-        topic: '',
-        courseCode: '',
-        questionBankName: '',
-        instituteName: '',
-        visibility: 'public'
-      });
 
     } catch (error) {
       console.error("Error saving questions:", error);
+      toast.dismiss('saving-template');
       toast.error("❌ Failed to save questions");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -910,41 +901,71 @@ const CreateQuestion = () => {
                   {showTemplateForm ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
 
-                {/* Template Form Fields - Collapsible */}
+                {/* Template Form Fields - Collapsible - Uses main formData */}
                 {showTemplateForm && (
                   <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border-2 border-primary/20 animate-in slide-in-from-top-2">
                     <div className="space-y-2">
                       <Label>Subject *</Label>
-                      <Input
-                        value={templateFormData.subject}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, subject: e.target.value }))}
-                        placeholder="Enter subject (e.g., Mathematics, Physics)"
-                      />
+                      <Select 
+                        value={formData.subject}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select subject" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subjects.map((subject) => (
+                            <SelectItem key={subject} value={subject}>
+                              {subject}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
                       <Label>Difficulty Level *</Label>
-                      <Input
-                        value={templateFormData.difficulty}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, difficulty: e.target.value }))}
-                        placeholder="Enter difficulty (e.g., Easy, Medium, Hard)"
-                      />
+                      <Select 
+                        value={formData.difficulty}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, difficulty: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {difficultyLevels.map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
                       <Label>Question Type *</Label>
-                      <Input
-                        value={templateFormData.questionType}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, questionType: e.target.value }))}
-                        placeholder="Enter type (e.g., MCQ, True/False)"
-                      />
+                      <Select 
+                        value={formData.questionType}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, questionType: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select question type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {questionTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
                       <Label>Topic</Label>
                       <Input
-                        value={templateFormData.topic}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, topic: e.target.value }))}
+                        value={formData.topic}
+                        onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
                         placeholder="Enter topic"
                       />
                     </div>
@@ -952,27 +973,30 @@ const CreateQuestion = () => {
                     <div className="space-y-2">
                       <Label>Course Code *</Label>
                       <Input
-                        value={templateFormData.courseCode}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, courseCode: e.target.value }))}
+                        value={formData.courseCode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, courseCode: e.target.value }))}
                         placeholder="Enter course code"
+                        list="courses-template"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label>Question Bank *</Label>
                       <Input
-                        value={templateFormData.questionBankName}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, questionBankName: e.target.value }))}
+                        value={formData.questionBankName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, questionBankName: e.target.value }))}
                         placeholder="Enter question bank name"
+                        list="questionBanks-template"
                       />
                     </div>
 
                     <div className="space-y-2">
                       <Label>Institute Name *</Label>
                       <Input
-                        value={templateFormData.instituteName}
-                        onChange={(e) => setTemplateFormData(prev => ({ ...prev, instituteName: e.target.value }))}
+                        value={formData.instituteName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, instituteName: e.target.value }))}
                         placeholder="Enter institute name"
+                        list="institutes-template"
                       />
                     </div>
 
@@ -981,17 +1005,17 @@ const CreateQuestion = () => {
                       <div className="flex items-center gap-3 h-10">
                         <Button
                           type="button"
-                          variant={templateFormData.visibility === 'public' ? 'default' : 'outline'}
+                          variant={formData.visibility === 'public' ? 'default' : 'outline'}
                           className="flex-1"
-                          onClick={() => setTemplateFormData(prev => ({ ...prev, visibility: 'public' }))}
+                          onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))}
                         >
                           Public
                         </Button>
                         <Button
                           type="button"
-                          variant={templateFormData.visibility === 'private' ? 'default' : 'outline'}
+                          variant={formData.visibility === 'private' ? 'default' : 'outline'}
                           className="flex-1"
-                          onClick={() => setTemplateFormData(prev => ({ ...prev, visibility: 'private' }))}
+                          onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))}
                         >
                           Private
                         </Button>
@@ -1021,17 +1045,6 @@ $2x + C$"
                     onClick={() => {
                       setIsTemplateModalOpen(false);
                       setTemplateText('');
-                      setShowTemplateForm(false);
-                      setTemplateFormData({
-                        subject: '',
-                        difficulty: 'Medium',
-                        questionType: 'MCQ',
-                        topic: '',
-                        courseCode: '',
-                        questionBankName: '',
-                        instituteName: '',
-                        visibility: 'public'
-                      });
                     }}
                   >
                     Cancel
@@ -1109,27 +1122,25 @@ $2x + C$"
                         setTemplateText('');
                         setParsedQuestions([]);
                         setShowParsedQuestions(false);
-                        setShowTemplateForm(false);
-                        setTemplateFormData({
-                        subject: '',
-                        difficulty: 'Medium',
-                        questionType: 'MCQ',
-                        topic: '',
-                        courseCode: '',
-                        questionBankName: '',
-                        instituteName: '',
-                        visibility: 'public'
-                      });
                     }}
                   >
                     Cancel
                   </Button>
                   <Button 
                     onClick={saveFromTemplate}
-                    disabled={!parsedQuestions.some(q => q.selected)}
+                    disabled={!parsedQuestions.some(q => q.selected) || isSaving}
                   >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Selected ({parsedQuestions.filter(q => q.selected).length})
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating Questions...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Selected ({parsedQuestions.filter(q => q.selected).length})
+                      </>
+                    )}
                   </Button>
                 </div>
                 </div>
@@ -1244,6 +1255,23 @@ $2x + C$"
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Global Datalists for Template Modal - Must be outside Dialog for browser autocomplete */}
+      <datalist id="courses-template">
+        {courses.map((code) => (
+          <option key={code} value={code} />
+        ))}
+      </datalist>
+      <datalist id="questionBanks-template">
+        {questionBanks.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
+      <datalist id="institutes-template">
+        {institutes.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
     </Layout>
   );
 };
