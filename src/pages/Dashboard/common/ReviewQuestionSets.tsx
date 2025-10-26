@@ -48,6 +48,8 @@ interface Question {
   correct_option_katex?: string;
   incorrect_option_latex?: string[];
   incorrect_option_katex?: string[];
+  solution_latex?: string;
+  katex_solution?: string;
   topic?: string;
   Sub_topic?: string;
 }
@@ -275,7 +277,7 @@ const ReviewQuestionSets = () => {
     setEditingQuestionId(question._id);
     setEditedQuestion({ 
       ...question, 
-      incorrect_option_katex: question.incorrect_option_katex ? [...question.incorrect_option_katex] : [] 
+      incorrect_option_latex: question.incorrect_option_latex ? [...question.incorrect_option_latex] : [] 
     });
   };
 
@@ -324,9 +326,9 @@ const ReviewQuestionSets = () => {
 
   const handleOptionChange = (index: number, value: string) => {
     if (!editedQuestion) return;
-    const newOptions = [...(editedQuestion.incorrect_option_katex || [])];
+    const newOptions = [...(editedQuestion.incorrect_option_latex || [])];
     newOptions[index] = value;
-    setEditedQuestion({ ...editedQuestion, incorrect_option_katex: newOptions });
+    setEditedQuestion({ ...editedQuestion, incorrect_option_latex: newOptions });
   };
 
   // Filter question banks based on search query
@@ -523,108 +525,111 @@ const ReviewQuestionSets = () => {
 
         {/* Preview Dialog */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="sm:max-w-[900px] glass-effect border-primary/20">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col glass-effect border-primary/20">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>{selectedBank?.name} - Preview</DialogTitle>
             </DialogHeader>
-            <div className="space-y-6">
-              {/* Search for Questions */}
-              <div className="flex gap-4">
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* Search and Actions Bar */}
+              <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search questions..."
-                    className="pl-10"
+                    placeholder="Search questions by content, subject, or topic..."
+                    className="pl-10 h-10"
                     value={questionSearchQuery}
                     onChange={(e) => setQuestionSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button variant="outline">Search</Button>
-              </div>
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">
-                  <Edit className="h-4 w-4 mr-1" />
+                <Button variant="outline" className="h-10 px-6">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+                <Button variant="outline" className="h-10 px-4">
+                  <Edit className="h-4 w-4 mr-2" />
                   Edit Set
                 </Button>
               </div>
               {/* Questions List */}
-              <div className="max-h-[600px] overflow-y-auto pr-2">
+              <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-6">
                 {loadingQuestions ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-muted-foreground">Loading questions...</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {filteredQuestions.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">No questions found.</p>
+                      <div className="text-center py-12 bg-muted/30 rounded-lg border-2 border-dashed">
+                        <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                        <p className="text-lg font-medium text-muted-foreground">No questions found</p>
                         <p className="text-sm text-muted-foreground mt-2">Try adjusting your search or add questions to this bank.</p>
                       </div>
                     ) : (
                     filteredQuestions.map((question, index) => {
-                      console.log(`🎯 Mapping question ${index + 1}:`, question._id, 'has katex:', !!question.katex_code, 'has latex:', !!question.latex_code);
                       return (
-                      <Card key={question._id} className="glass-effect border-primary/20 hover:border-primary/40 transition-all">
-                        <CardContent className="p-4">
-                          {/* Question Number Badge */}
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge variant="outline" className="text-xs">
-                              Question #{index + 1}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {question.question_type || 'Multiple Choice'}
-                            </Badge>
-                          </div>
-                          
+                      <Card key={question._id} className="overflow-hidden border-2 hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
+                        <CardContent className="p-0">
                           {editingQuestionId === question._id ? (
-                            <div className="space-y-4">
+                            <div className="p-6 space-y-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20">
+                              <div className="flex items-center justify-between pb-4 border-b">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                  <Edit className="h-5 w-5 text-primary" />
+                                  Editing Question #{index + 1}
+                                </h3>
+                                <Badge variant="secondary">{question.question_type || 'MCQ'}</Badge>
+                              </div>
+                              
                               <div className="space-y-2">
-                                <Label htmlFor={`katex-${question._id}`}>Question Text (KaTeX/LaTeX)</Label>
+                                <Label htmlFor={`latex-${question._id}`} className="text-base font-semibold">Question Text</Label>
                                 <Textarea
-                                  id={`katex-${question._id}`}
-                                  value={editedQuestion?.katex_code || ''}
+                                  id={`latex-${question._id}`}
+                                  value={editedQuestion?.latex_code || ''}
                                   onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, katex_code: e.target.value })
+                                    setEditedQuestion({ ...editedQuestion!, latex_code: e.target.value })
                                   }
-                                  placeholder="Enter question in KaTeX/LaTeX format"
-                                  rows={4}
+                                  placeholder="Enter question in LaTeX format (e.g., $x^2 + 3x$)"
+                                  rows={3}
                                   className="font-mono text-sm"
                                 />
                                 {/* Live Preview */}
-                                {editedQuestion?.katex_code && (
-                                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                {editedQuestion?.latex_code && (
+                                  <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                                     <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Preview:</p>
-                                    <div className="text-sm">
+                                    <div className="text-base">
                                       <KatexRenderer isRawLatex={true}>
-                                        {editedQuestion.katex_code}
+                                        {editedQuestion.latex_code}
                                       </KatexRenderer>
                                     </div>
                                   </div>
                                 )}
                               </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`subject-${question._id}`}>Subject</Label>
-                                <Input
-                                  id={`subject-${question._id}`}
-                                  value={editedQuestion?.subject || ''}
-                                  onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, subject: e.target.value })
-                                  }
-                                  placeholder="Enter subject"
-                                />
+                              
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor={`subject-${question._id}`}>Subject</Label>
+                                  <Input
+                                    id={`subject-${question._id}`}
+                                    value={editedQuestion?.subject || ''}
+                                    onChange={(e) =>
+                                      setEditedQuestion({ ...editedQuestion!, subject: e.target.value })
+                                    }
+                                    placeholder="Enter subject"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor={`topic-${question._id}`}>Topic</Label>
+                                  <Input
+                                    id={`topic-${question._id}`}
+                                    value={editedQuestion?.topic || ''}
+                                    onChange={(e) =>
+                                      setEditedQuestion({ ...editedQuestion!, topic: e.target.value })
+                                    }
+                                    placeholder="Enter topic"
+                                  />
+                                </div>
                               </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`topic-${question._id}`}>Topic</Label>
-                                <Input
-                                  id={`topic-${question._id}`}
-                                  value={editedQuestion?.topic || ''}
-                                  onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, topic: e.target.value })
-                                  }
-                                  placeholder="Enter topic"
-                                />
-                              </div>
+                              
                               <div className="space-y-2">
                                 <Label htmlFor={`difficulty-${question._id}`}>Difficulty Rating (1-5)</Label>
                                 <Input
@@ -639,35 +644,37 @@ const ReviewQuestionSets = () => {
                                       difficulty_rating: parseInt(e.target.value),
                                     })
                                   }
+                                  className="w-32"
                                 />
                               </div>
+                              
                               <div className="space-y-2">
-                                <Label htmlFor={`correct-${question._id}`}>Correct Answer (KaTeX/LaTeX)</Label>
+                                <Label htmlFor={`correct-${question._id}`} className="text-base font-semibold">Correct Answer</Label>
                                 <Textarea
                                   id={`correct-${question._id}`}
-                                  value={editedQuestion?.correct_option_katex || ''}
+                                  value={editedQuestion?.correct_option_latex || ''}
                                   onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, correct_option_katex: e.target.value })
+                                    setEditedQuestion({ ...editedQuestion!, correct_option_latex: e.target.value })
                                   }
-                                  placeholder="Enter correct answer in KaTeX/LaTeX format"
+                                  placeholder="Enter correct answer in LaTeX format"
                                   rows={2}
                                   className="font-mono text-sm"
                                 />
-                                {/* Preview */}
-                                {editedQuestion?.correct_option_katex && (
-                                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                                {editedQuestion?.correct_option_latex && (
+                                  <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-green-200 dark:border-green-800">
                                     <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Preview:</p>
                                     <div className="text-sm">
                                       <KatexRenderer isRawLatex={true}>
-                                        {editedQuestion.correct_option_katex}
+                                        {editedQuestion.correct_option_latex}
                                       </KatexRenderer>
                                     </div>
                                   </div>
                                 )}
                               </div>
+                              
                               <div className="space-y-2">
-                                <Label>Incorrect Options (KaTeX/LaTeX)</Label>
-                                {editedQuestion?.incorrect_option_katex?.map((option, idx) => (
+                                <Label className="text-base font-semibold">Incorrect Options</Label>
+                                {editedQuestion?.incorrect_option_latex?.map((option, idx) => (
                                   <div key={idx} className="space-y-2">
                                     <Textarea
                                       value={option}
@@ -676,9 +683,8 @@ const ReviewQuestionSets = () => {
                                       rows={2}
                                       className="font-mono text-sm"
                                     />
-                                    {/* Preview */}
                                     {option && (
-                                      <div className="p-2 bg-gray-50 dark:bg-gray-900/20 rounded border border-gray-200 dark:border-gray-800">
+                                      <div className="p-2 bg-white dark:bg-gray-900 rounded border-2 border-gray-200 dark:border-gray-800">
                                         <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
                                         <div className="text-sm">
                                           <KatexRenderer isRawLatex={true}>
@@ -690,124 +696,164 @@ const ReviewQuestionSets = () => {
                                   </div>
                                 ))}
                               </div>
-                              <div className="flex justify-end gap-2">
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor={`solution-${question._id}`} className="text-base font-semibold">Solution (Optional)</Label>
+                                <Textarea
+                                  id={`solution-${question._id}`}
+                                  value={editedQuestion?.solution_latex || ''}
+                                  onChange={(e) =>
+                                    setEditedQuestion({ ...editedQuestion!, solution_latex: e.target.value })
+                                  }
+                                  placeholder="Enter solution in LaTeX format"
+                                  rows={4}
+                                  className="font-mono text-sm"
+                                />
+                                {editedQuestion?.solution_latex && (
+                                  <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">Preview:</p>
+                                    <div className="text-sm">
+                                      <KatexRenderer isRawLatex={true}>
+                                        {editedQuestion.solution_latex}
+                                      </KatexRenderer>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex justify-end gap-3 pt-4 border-t">
                                 <Button
                                   variant="outline"
-                                  size="sm"
+                                  size="default"
                                   onClick={handleCancelEdit}
                                 >
-                                  <X className="h-4 w-4 mr-1" />
+                                  <X className="h-4 w-4 mr-2" />
                                   Cancel
                                 </Button>
                                 <Button
-                                  size="sm"
+                                  size="default"
                                   onClick={() => handleSaveQuestion(question._id)}
+                                  className="bg-gradient-to-r from-primary to-primary/80"
                                 >
-                                  <Save className="h-4 w-4 mr-1" />
-                                  Save
+                                  <Save className="h-4 w-4 mr-2" />
+                                  Save Changes
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <div className="space-y-3">
-                              {/* Question Text - Make it prominent */}
-                              <div className="flex justify-between items-start gap-2">
-                                <div className="flex-1">
-                                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">QUESTION:</p>
-                                    <div className="text-base font-medium text-gray-900 dark:text-gray-100">
-                                      {/* katex_code contains pre-rendered HTML, render it directly */}
-                                      {question.katex_code ? (
-                                        <>
-                                          {console.log('🎨 Rendering katex_code HTML for question:', question._id, 'Length:', question.katex_code.length, 'Preview:', question.katex_code.substring(0, 100))}
-                                          <div dangerouslySetInnerHTML={{ __html: question.katex_code }} />
-                                        </>
-                                      ) : question.latex_code ? (
-                                        <>
-                                          {console.log('🎨 Rendering latex_code through KatexRenderer for question:', question._id, 'Content:', question.latex_code)}
-                                          <KatexRenderer isRawLatex={true}>
-                                            {question.latex_code}
-                                          </KatexRenderer>
-                                        </>
+                            <div className="divide-y">
+                              {/* Header Section */}
+                              <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-3">
+                                      <Badge variant="default" className="text-sm px-3 py-1">
+                                        Question #{index + 1}
+                                      </Badge>
+                                      <Badge variant="secondary" className="text-sm">
+                                        {question.question_type || 'MCQ'}
+                                      </Badge>
+                                      <Badge variant={question.difficulty_rating >= 3 ? 'destructive' : question.difficulty_rating >= 2 ? 'default' : 'secondary'}>
+                                        {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
+                                      </Badge>
+                                    </div>
+                                    <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed">
+                                      {question.latex_code ? (
+                                        <KatexRenderer isRawLatex={true}>
+                                          {question.latex_code}
+                                        </KatexRenderer>
+                                      ) : question.katex_code ? (
+                                        <div dangerouslySetInnerHTML={{ __html: question.katex_code }} />
                                       ) : (
-                                        <>
-                                          {console.log('❌ No question content for:', question._id)}
-                                          <span className="italic text-gray-500">No question text available</span>
-                                        </>
+                                        <span className="italic text-gray-500">No question text available</span>
                                       )}
                                     </div>
+                                    {(question.subject || question.topic) && (
+                                      <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                                        {question.subject && <span>📚 {question.subject}</span>}
+                                        {question.topic && <span>🏷️ {question.topic}</span>}
+                                      </div>
+                                    )}
                                   </div>
-                                  {question.topic && (
-                                    <p className="text-xs text-muted-foreground mt-2">📚 Topic: {question.topic}</p>
-                                  )}
-                                  {question.Sub_topic && (
-                                    <p className="text-xs text-muted-foreground">📖 Sub-topic: {question.Sub_topic}</p>
-                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEditQuestion(question)}
+                                    className="hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                  >
+                                    <Edit className="h-5 w-5" />
+                                  </Button>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditQuestion(question)}
-                                  className="flex-shrink-0"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
                               </div>
                               
-                              {/* Metadata */}
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                {question.subject && (
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-muted-foreground">Subject:</span>
-                                    <span className="font-medium">{question.subject}</span>
+                              {/* Options Section */}
+                              <div className="p-5 space-y-4">
+                                {/* Correct Answer */}
+                                {(question.correct_option_latex || question.correct_option_katex) && (
+                                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border-2 border-green-200 dark:border-green-800">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
+                                        ✓
+                                      </div>
+                                      <span className="font-semibold text-green-700 dark:text-green-300">Correct Answer</span>
+                                    </div>
+                                    <div className="text-base text-green-900 dark:text-green-100 ml-8">
+                                      {question.correct_option_latex ? (
+                                        <KatexRenderer isRawLatex={true}>
+                                          {question.correct_option_latex}
+                                        </KatexRenderer>
+                                      ) : question.correct_option_katex ? (
+                                        <div dangerouslySetInnerHTML={{ __html: question.correct_option_katex }} />
+                                      ) : null}
+                                    </div>
                                   </div>
                                 )}
-                                <div className="flex items-center gap-1">
-                                  <span className="text-muted-foreground">Difficulty:</span>
-                                  <Badge variant={question.difficulty_rating >= 3 ? 'destructive' : question.difficulty_rating >= 2 ? 'default' : 'secondary'}>
-                                    {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
-                                  </Badge>
-                                </div>
-                                {question.question_type && (
-                                  <div className="flex items-center gap-1 col-span-2">
-                                    <span className="text-muted-foreground">Type:</span>
-                                    <span className="font-medium">{question.question_type}</span>
+                                
+                                {/* Incorrect Options */}
+                                {((question.incorrect_option_latex && question.incorrect_option_latex.length > 0) || 
+                                  (question.incorrect_option_katex && question.incorrect_option_katex.length > 0)) && (
+                                  <div className="space-y-2">
+                                    <span className="font-semibold text-sm text-muted-foreground">Incorrect Options:</span>
+                                    {(question.incorrect_option_latex || question.incorrect_option_katex || []).map((option, idx) => (
+                                      <div key={idx} className="p-4 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                                        <div className="flex items-start gap-3">
+                                          <div className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                            ✗
+                                          </div>
+                                          <div className="text-base text-red-900 dark:text-red-100 flex-1">
+                                            {question.incorrect_option_latex && question.incorrect_option_latex[idx] ? (
+                                              <KatexRenderer isRawLatex={true}>
+                                                {question.incorrect_option_latex[idx]}
+                                              </KatexRenderer>
+                                            ) : question.incorrect_option_katex && question.incorrect_option_katex[idx] ? (
+                                              <div dangerouslySetInnerHTML={{ __html: question.incorrect_option_katex[idx] }} />
+                                            ) : null}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
                               </div>
                               
-                              {/* Correct Answer */}
-                              {(question.correct_option_katex || question.correct_option_latex) && (
-                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                                  <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">✓ Correct Answer:</p>
-                                  <div className="text-sm text-green-900 dark:text-green-100">
-                                    {/* correct_option_katex contains pre-rendered HTML */}
-                                    {question.correct_option_katex ? (
-                                      <div dangerouslySetInnerHTML={{ __html: question.correct_option_katex }} />
-                                    ) : question.correct_option_latex ? (
+                              {/* Solution Section */}
+                              {(question.solution_latex || question.katex_solution) && (
+                                <div className="p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="h-7 w-7 rounded-full bg-purple-500 flex items-center justify-center text-white text-lg">
+                                      💡
+                                    </div>
+                                    <span className="font-bold text-lg text-purple-700 dark:text-purple-300">Solution</span>
+                                  </div>
+                                  <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed">
+                                    {question.solution_latex ? (
                                       <KatexRenderer isRawLatex={true}>
-                                        {question.correct_option_latex}
+                                        {question.solution_latex}
                                       </KatexRenderer>
+                                    ) : question.katex_solution ? (
+                                      <div dangerouslySetInnerHTML={{ __html: question.katex_solution }} />
                                     ) : null}
                                   </div>
-                                </div>
-                              )}
-                              
-                              {/* Incorrect Options */}
-                              {question.incorrect_option_katex && question.incorrect_option_katex.length > 0 && (
-                                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-                                  <p className="text-xs font-semibold text-red-700 dark:text-red-300 mb-2">✗ Incorrect Options:</p>
-                                  <ul className="space-y-2">
-                                    {question.incorrect_option_katex.map((option, idx) => (
-                                      <li key={idx} className="text-sm text-red-900 dark:text-red-100 flex items-start gap-2">
-                                        <span className="text-red-500 mt-1">•</span>
-                                        <div className="flex-1">
-                                          {/* Pre-rendered HTML from database */}
-                                          <div dangerouslySetInnerHTML={{ __html: option }} />
-                                        </div>
-                                      </li>
-                                    ))}
-                                  </ul>
                                 </div>
                               )}
                             </div>

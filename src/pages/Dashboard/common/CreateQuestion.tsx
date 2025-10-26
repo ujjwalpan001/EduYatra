@@ -42,6 +42,7 @@ interface ParsedQuestion {
   question: string;
   correctOption: string;
   incorrectOptions: string[];
+  solution?: string;
   selected: boolean;
 }
 
@@ -76,6 +77,7 @@ const CreateQuestion = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [includeSolution, setIncludeSolution] = useState(false);
 
   // Authenticate user and fetch data
   useEffect(() => {
@@ -157,15 +159,11 @@ const CreateQuestion = () => {
 
   // Parse template text into questions
   const parseTemplate = () => {
-    const lines = templateText.trim().split('\n').filter(line => line.trim());
+    // Don't filter out empty lines yet, we need them as separators
+    const allLines = templateText.trim().split('\n');
     
-    if (lines.length === 0) {
+    if (allLines.length === 0) {
       toast.error("❌ Please enter questions in the template");
-      return;
-    }
-
-    if (lines.length % 5 !== 0) {
-      toast.error("❌ Invalid format. Each question must have exactly 5 lines:\n1. Question\n2. Correct Answer\n3-5. Three Incorrect Answers");
       return;
     }
 
@@ -192,13 +190,78 @@ const CreateQuestion = () => {
     }
 
     const questions: ParsedQuestion[] = [];
-    for (let i = 0; i < lines.length; i += 5) {
-      questions.push({
-        question: lines[i],
-        correctOption: lines[i + 1],
-        incorrectOptions: [lines[i + 2], lines[i + 3], lines[i + 4]],
-        selected: true // All selected by default
-      });
+    
+    if (!includeSolution) {
+      // Without solution: exactly 5 lines per question (filter empty lines)
+      const lines = allLines.filter(line => line.trim());
+      
+      if (lines.length % 5 !== 0) {
+        toast.error("❌ Invalid format. Each question must have exactly 5 lines:\n1. Question\n2. Correct Answer\n3-5. Three Incorrect Answers");
+        return;
+      }
+      
+      for (let i = 0; i < lines.length; i += 5) {
+        questions.push({
+          question: lines[i],
+          correctOption: lines[i + 1],
+          incorrectOptions: [lines[i + 2], lines[i + 3], lines[i + 4]],
+          selected: true
+        });
+      }
+    } else {
+      // With solution: Split by blank lines to separate questions
+      const questionBlocks: string[][] = [];
+      let currentBlock: string[] = [];
+      
+      for (const line of allLines) {
+        if (line.trim() === '') {
+          // Empty line - if we have content, save the block
+          if (currentBlock.length > 0) {
+            questionBlocks.push(currentBlock);
+            currentBlock = [];
+          }
+        } else {
+          currentBlock.push(line);
+        }
+      }
+      
+      // Don't forget the last block
+      if (currentBlock.length > 0) {
+        questionBlocks.push(currentBlock);
+      }
+      
+      if (questionBlocks.length === 0) {
+        toast.error("❌ No questions found. Please separate each question with a blank line.");
+        return;
+      }
+      
+      // Parse each block
+      for (let blockIndex = 0; blockIndex < questionBlocks.length; blockIndex++) {
+        const block = questionBlocks[blockIndex];
+        
+        if (block.length < 6) {
+          toast.error(`❌ Question ${blockIndex + 1} is incomplete. Each question needs:\n• Line 1: Question\n• Line 2: Correct answer\n• Lines 3-5: Three incorrect answers\n• Lines 6+: Solution (can be multiple lines)\n\nSeparate each question with a blank line.`);
+          return;
+        }
+        
+        const question = block[0];
+        const correctOption = block[1];
+        const incorrectOptions = [block[2], block[3], block[4]];
+        const solutionLines = block.slice(5); // All lines after the 5th line
+        
+        questions.push({
+          question,
+          correctOption,
+          incorrectOptions,
+          solution: solutionLines.join('\n'),
+          selected: true
+        });
+      }
+    }
+
+    if (questions.length === 0) {
+      toast.error("❌ No valid questions found in the template");
+      return;
     }
 
     setParsedQuestions(questions);
@@ -256,8 +319,8 @@ const CreateQuestion = () => {
           instituteName: formData.instituteName,
           questionBankName: formData.questionBankName,
           image: '',
-          solution_latex: '',
-          katex_solution: '',
+          solution_latex: q.solution || '',
+          katex_solution: q.solution ? ReactDOMServer.renderToString(<>{renderKatex(q.solution)}</>) : '',
           Sub_topic: '',
           bloom_level: '',
           question_stats: {},
@@ -775,6 +838,14 @@ const CreateQuestion = () => {
                     />
                   </div>
                 </div>
+
+                {/* Save Button at Bottom of Form */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Question
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -870,13 +941,24 @@ const CreateQuestion = () => {
             <DialogDescription>
               {!showParsedQuestions ? (
                 <>
-                  Fill in the details below and paste your questions. Each question must have 5 lines:
-                  <br />
-                  <strong>Line 1:</strong> Question text (supports LaTeX)
-                  <br />
-                  <strong>Line 2:</strong> Correct answer
-                  <br />
-                  <strong>Line 3-5:</strong> Three incorrect answers
+                  Fill in the details below and paste your questions. 
+                  {includeSolution ? (
+                    <>
+                      <br /><strong>With Solution Format:</strong>
+                      <br />• <strong>Line 1:</strong> Question text (LaTeX supported)
+                      <br />• <strong>Line 2:</strong> Correct answer
+                      <br />• <strong>Line 3-5:</strong> Three incorrect answers
+                      <br />• <strong>Line 6+:</strong> Solution (can be multiple lines)
+                      <br />• <strong>⚠️ Important:</strong> Separate each question with a blank line
+                    </>
+                  ) : (
+                    <>
+                      <br /><strong>Without Solution Format:</strong>
+                      <br />• <strong>Line 1:</strong> Question text (LaTeX supported)
+                      <br />• <strong>Line 2:</strong> Correct answer
+                      <br />• <strong>Line 3-5:</strong> Three incorrect answers
+                    </>
+                  )}
                 </>
               ) : (
                 <>Review and select questions to import. LaTeX expressions will be rendered.</>
@@ -887,6 +969,28 @@ const CreateQuestion = () => {
           <div className="space-y-4 mt-4 flex-1 overflow-y-auto">
             {!showParsedQuestions ? (
               <>
+                {/* Include Solution Checkbox */}
+                <Card className={`p-4 transition-all duration-200 ${includeSolution ? 'border-primary bg-primary/5' : 'border-muted bg-muted/30'}`}>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="includeSolution"
+                      checked={includeSolution}
+                      onCheckedChange={(checked) => setIncludeSolution(checked as boolean)}
+                      className="h-5 w-5"
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="includeSolution" className="cursor-pointer font-medium text-base">
+                        Include solution in template
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {includeSolution 
+                          ? "Each question: 5 lines (Q + CA + 3 IA) + solution lines. Separate questions with a blank line." 
+                          : "Each question will have exactly 5 lines (question + correct answer + 3 incorrect answers)"}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
                 {/* Manage Details Button */}
                 <Button
                   type="button"
@@ -1028,11 +1132,9 @@ const CreateQuestion = () => {
                   <Label htmlFor="template">Paste Questions Here *</Label>
                   <Textarea
                     id="template"
-                    placeholder="Solve $\int x^2 dx$
-$\frac{x^3}{3} + C$
-$x^3 + C$
-$\frac{x^2}{2} + C$
-$2x + C$"
+                    placeholder={includeSolution 
+                      ? "\\text{Find derivative of } f(x) = x^2 + 3x\n2x + 3\nx^2 + 3\n2x\nx + 3\n\\text{Solution: Using power rule } \\frac{d}{dx}(x^n) = nx^{n-1}:\n\\frac{d}{dx}(x^2 + 3x) = 2x + 3\n\\text{Therefore, } f'(x) = 2x + 3\n\n\\text{Solve } \\int x^2 dx\n\\frac{x^3}{3} + C\nx^3 + C\n\\frac{x^2}{2} + C\n2x + C\n\\text{Solution: Using power rule for integration:}\n\\int x^n dx = \\frac{x^{n+1}}{n+1} + C\n\\text{Therefore, } \\int x^2 dx = \\frac{x^3}{3} + C"
+                      : "Solve $\\int x^2 dx$\n$\\frac{x^3}{3} + C$\n$x^3 + C$\n$\\frac{x^2}{2} + C$\n$2x + C$"}
                     value={templateText}
                     onChange={(e) => setTemplateText(e.target.value)}
                     className="min-h-[400px] font-mono text-sm"
@@ -1108,6 +1210,14 @@ $2x + C$"
                                 </div>
                               ))}
                             </div>
+                            {q.solution && (
+                              <div className="mt-4 pt-4 border-t pl-6">
+                                <h4 className="font-medium text-sm mb-2 text-primary">Solution:</h4>
+                                <div className="text-sm text-muted-foreground overflow-x-auto">
+                                  <KatexRenderer>{q.solution}</KatexRenderer>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </Card>
