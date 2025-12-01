@@ -8,7 +8,7 @@ EduYatra is a comprehensive education management platform designed to empower in
 ## 🚀 Live Demo
 We invite you to explore EduYatra through our live demo:
 
-**[View Live Demo](https://eduyatra.vercel.app)**
+**[View Live Demo](https://edu-yatra.vercel.app)**
 
 The demo showcases the latest features and user experience. Please note that some advanced functionalities may require authentication or institute access.
 
@@ -61,7 +61,10 @@ To run the frontend locally, follow these steps:
 This project is proprietary and not open source. The code is provided for demonstration purposes only. For demo access, partnership, or collaboration inquiries, please contact us via the live demo site.
 
 ## Contact
-For questions, feedback, or business inquiries, please use the contact form on the [Live Demo](https://eduyatra.vercel.app) or reach out to the project owner via GitHub.
+For questions, feedback, or business inquiries, please use the contact form on the [Live Demo](https://edu-yatra.vercel.app), or reach out directly:
+
+- **Phone:** +91 8688531505
+- **Email:** uzwalpandey1234@gmail.com
 
 Thank you for your interest in EduYatra!
 
