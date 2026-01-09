@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Play, Award, Clock, Users, Upload, CheckCircle, AlertCircle, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { API_URL } from "@/config/api";
 
 // Types
 interface RecentScore {
@@ -59,7 +60,7 @@ const Index = () => {
   useEffect(() => {
     const fetchPerformance = async () => {
       try {
-        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/student-performance');
+        const response = await fetchWithAuth(`${API_URL}/exams/student-performance`);
         const data = await response.json();
         
         if (data.success && data.performance) {

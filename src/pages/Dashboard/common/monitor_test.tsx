@@ -28,6 +28,7 @@ import {
   Flag
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/config/api";
 import { toast } from "sonner";
 
 interface Student {
@@ -110,7 +111,7 @@ const MonitorTest: React.FC = () => {
 
         console.log(`📊 Fetching monitoring data for exam ${testId}`);
         
-        const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+        const response = await fetch(`${API_URL}/exams/${testId}/monitor`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -155,7 +156,7 @@ const MonitorTest: React.FC = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+        const response = await fetch(`${API_URL}/exams/${testId}/monitor`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -221,7 +222,7 @@ const MonitorTest: React.FC = () => {
         return;
       }
 
-      const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${testId}/monitor`, {
+      const response = await fetch(`${API_URL}/exams/${testId}/monitor`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -259,7 +260,7 @@ const MonitorTest: React.FC = () => {
       if (action === 'Pause Test') {
         console.log(`⏸️ Pausing test for student ${student.email}`);
         
-        const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/pause-test', {
+        const response = await fetch(`${API_URL}/exams/pause-test`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -283,7 +284,7 @@ const MonitorTest: React.FC = () => {
       } else if (action === 'End Test') {
         console.log(`⏹️ Ending test for student ${student.email}`);
         
-        const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/end-test', {
+        const response = await fetch(`${API_URL}/exams/end-test`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

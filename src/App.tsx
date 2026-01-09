@@ -44,6 +44,7 @@ import LearnByTopic from "./pages/Dashboard/student/LearnByTopic";
 import MyPerformanceStudent from "./pages/Dashboard/student/MyPerformance";
 import PracticeExams from "./pages/Dashboard/student/PracticeExams";
 import TestPage from "./pages/Dashboard/student/TestPage";
+import ViewTestAnswers from "./pages/Dashboard/student/ViewTestAnswers";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/student/practice" element={<PracticeExams />} />
             <Route path="/student/performance" element={<MyPerformanceStudent />} />
             <Route path="/student/enrollment" element={<Enrollment />} />
+            <Route path="/student/test-answers/:submissionId" element={<ViewTestAnswers />} />
             <Route path="/test" element={< TestPage />} />
             <Route path="/settings/general" element={<GeneralSettings />} />
             <Route path="/student/settings" element={<SettingsStudent />} />

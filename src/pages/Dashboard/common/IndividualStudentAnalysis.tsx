@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Search, TrendingUp, Award, BookOpen, Clock, User, Mail, Calendar } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 interface Student {
   student_id: string;
@@ -117,7 +118,7 @@ const IndividualStudentAnalysis = () => {
       }
 
       const response = await axios.get<StudentsResponse>(
-        "https://eduyatrabackend.onrender.com/api/exams/students-analysis",
+        `${API_URL}/exams/students-analysis`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -145,7 +146,7 @@ const IndividualStudentAnalysis = () => {
       }
 
       const response = await axios.get<DetailedAnalysisResponse>(
-        `https://eduyatrabackend.onrender.com/api/exams/student-analysis/${studentId}`,
+        `${API_URL}/exams/student-analysis/${studentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

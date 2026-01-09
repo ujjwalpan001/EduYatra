@@ -7,6 +7,7 @@ import { User, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_URL } from "@/config/api";
 
 interface Profile {
   name: string;
@@ -113,7 +114,7 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post<SignupResponse>("https://eduyatrabackend.onrender.com/api/users/signup", formData);
+      const response = await axios.post<SignupResponse>(`${API_URL}/users/signup`, formData);
       const { token, role } = response.data;
 
       const decoded: any = jwtDecode(token);

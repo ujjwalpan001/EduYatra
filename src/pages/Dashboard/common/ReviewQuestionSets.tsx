@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import axios from "axios";
 import { KatexRenderer } from "@/lib/katex-rendering";
 import 'katex/dist/katex.min.css';
+import { API_URL } from "@/config/api";
 
 // Utility to format dates as "X days ago"
 const formatRelativeTime = (date: string | Date): string => {
@@ -101,7 +102,7 @@ const ReviewQuestionSets = () => {
           return;
         }
 
-        const res = await axios.get<QuestionBankResponse>('https://eduyatrabackend.onrender.com/api/question-banks/all', {
+        const res = await axios.get<QuestionBankResponse>(`${API_URL}/question-banks/all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -110,7 +111,7 @@ const ReviewQuestionSets = () => {
             res.data.data.map(async (bank) => {
               try {
                 const questionsRes = await axios.get<QuestionsResponse>(
-                  `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
+                  `${API_URL}/question-banks/questions?questionBankId=${bank._id}`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -179,7 +180,7 @@ const ReviewQuestionSets = () => {
       }
 
       const res = await axios.post<CreateQuestionBankResponse>(
-        'https://eduyatrabackend.onrender.com/api/question-banks/create',
+        `${API_URL}/question-banks/create`,
         newBank,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -226,7 +227,7 @@ const ReviewQuestionSets = () => {
 
       console.log('🔍 Fetching questions for bank:', bank._id);
       const response = await axios.get<QuestionsResponse>(
-        `https://eduyatrabackend.onrender.com/api/question-banks/questions?questionBankId=${bank._id}`,
+        `${API_URL}/question-banks/questions?questionBankId=${bank._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -300,7 +301,7 @@ const ReviewQuestionSets = () => {
 
       // Update the question via API
       const response = await axios.put<UpdateQuestionResponse>(
-        `https://eduyatrabackend.onrender.com/api/questions/${questionId}`,
+        `${API_URL}/questions/${questionId}`,
         editedQuestion,
         { headers: { Authorization: `Bearer ${token}` } }
       );

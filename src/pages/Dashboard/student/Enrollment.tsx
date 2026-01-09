@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BookOpen, Clock, Play, CheckCircle, Info } from "lucide-react";
 import { TestInstructionsModal } from "@/components/students/TestInstructionsModal";
 import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 // Utility function for authenticated API calls (copied from ConductTestOnline.tsx and TestPage.tsx)
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
@@ -111,7 +112,7 @@ const Enrollment: React.FC = () => {
       try {
         // Add cache-busting timestamp to force fresh data
         const timestamp = new Date().getTime();
-        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/assigned?_t=${timestamp}`);
+        const response = await fetchWithAuth(`${API_URL}/exams/assigned?_t=${timestamp}`);
         const data = await response.json();
         console.log('Assigned exams response:', data);
 
@@ -185,7 +186,7 @@ const Enrollment: React.FC = () => {
         console.log('🔍 Fetching attended tests from backend...');
         // Add cache-busting timestamp to force fresh data
         const timestamp = new Date().getTime();
-        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/attended-tests?_t=${timestamp}`);
+        const response = await fetchWithAuth(`${API_URL}/exams/attended-tests?_t=${timestamp}`);
         const data = await response.json();
         console.log('📥 Attended tests RAW response:', data);
         console.log('📊 Response status:', response.status, response.ok);
@@ -423,6 +424,15 @@ const Enrollment: React.FC = () => {
                                     >
                                       <Info className="h-4 w-4 mr-1" />
                                       {showAttendedDetails === (result._id || result.test) ? 'Hide Details' : 'View Details'}
+                                    </Button>
+                                    <Button 
+                                      variant="default" 
+                                      size="sm" 
+                                      className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+                                      onClick={() => navigate(`/student/test-answers/${result._id}`)}
+                                    >
+                                      <BookOpen className="h-4 w-4 mr-1" />
+                                      View Answers
                                     </Button>
                                   </div>
                                 </div>

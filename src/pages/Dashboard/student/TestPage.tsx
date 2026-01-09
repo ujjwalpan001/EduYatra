@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Lock } from "lucide-react";
 import { KatexRenderer } from '@/lib/katex-rendering';
 import 'katex/dist/katex.min.css';
+import { API_URL } from "@/config/api";
 
 // Utility function for shuffling an array (Fisher-Yates algorithm)
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -136,7 +137,7 @@ const TestPage: React.FC = () => {
       }
       setIsLoadingQuestions(true);
       try {
-        const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/${examId}/questions`, {
+        const response = await fetchWithAuth(`${API_URL}/exams/${examId}/questions`, {
           method: 'GET',
         });
         const data = await response.json();
@@ -336,7 +337,7 @@ const TestPage: React.FC = () => {
     try {
       // Use the same auth helper and HTTPS base as other requests
       // IMPORTANT: The correct endpoint is /api/exams/submit-test (note the /exams prefix)
-      const response = await fetchWithAuth(`https://eduyatrabackend.onrender.com/api/exams/submit-test`, {
+      const response = await fetchWithAuth(`${API_URL}/exams/submit-test`, {
         method: 'POST',
         body: JSON.stringify({
           examId,

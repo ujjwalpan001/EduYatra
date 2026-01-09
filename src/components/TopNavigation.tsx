@@ -23,6 +23,7 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
+import { API_URL } from "@/config/api";
 import { toast } from "sonner"; // Add toast import
 
 interface TopNavigationProps {
@@ -77,7 +78,7 @@ function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setPro
       if (!token) throw new Error("No token found");
 
       const response = await axios.put<UpdateProfileResponse>(
-        "https://eduyatrabackend.onrender.com/api/users/profile",
+        `${API_URL}/users/profile`,
         {
           fullName: editForm.name,
           email: editForm.email,

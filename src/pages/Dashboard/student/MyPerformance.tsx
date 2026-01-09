@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, Award, Target, Clock, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
+import { API_URL } from "@/config/api";
 
 // Types
 interface RecentScore {
@@ -64,7 +65,7 @@ const MyPerformance = () => {
     const fetchPerformance = async () => {
       try {
         console.log('🔄 Fetching student performance data...');
-        const response = await fetchWithAuth('https://eduyatrabackend.onrender.com/api/exams/student-performance');
+        const response = await fetchWithAuth(`${API_URL}/exams/student-performance`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

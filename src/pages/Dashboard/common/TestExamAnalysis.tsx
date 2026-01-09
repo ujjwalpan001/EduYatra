@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { BarChart3, TrendingUp, Users, Clock, Download, Eye } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 interface Participant {
   student_id: string;
@@ -83,7 +84,7 @@ const TestExamAnalysis = () => {
       }
 
       const response = await axios.get<AnalysisResponse>(
-        "https://eduyatrabackend.onrender.com/api/exams/exam-analysis",
+        `${API_URL}/exams/exam-analysis`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -128,7 +129,7 @@ const TestExamAnalysis = () => {
       }
 
       const response = await axios.get<ParticipantsResponse>(
-        `https://eduyatrabackend.onrender.com/api/exams/${exam.exam_id}/participants`,
+        `${API_URL}/exams/${exam.exam_id}/participants`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -159,7 +160,7 @@ const TestExamAnalysis = () => {
       const allParticipants: Participant[] = [];
       for (const exam of exams) {
         const response = await axios.get<ParticipantsResponse>(
-          `https://eduyatrabackend.onrender.com/api/exams/${exam.exam_id}/participants`,
+          `${API_URL}/exams/${exam.exam_id}/participants`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) {

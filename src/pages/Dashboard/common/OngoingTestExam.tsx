@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Users, Eye, Pause, Play, StopCircle, RefreshCw, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 interface Exam {
   _id: string;
@@ -46,7 +47,7 @@ const OngoingTestExam = () => {
 
       console.log('📊 Fetching all exams...');
       
-      const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/all', {
+      const response = await fetch(`${API_URL}/exams/all`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -118,7 +119,7 @@ const OngoingTestExam = () => {
   const handleEndTest = async (examId: string, examTitle: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('https://eduyatrabackend.onrender.com/api/exams/end-test', {
+      const response = await fetch(`${API_URL}/exams/end-test`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -153,7 +154,7 @@ const OngoingTestExam = () => {
   const handleDeleteExam = async (examId: string, examTitle: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`https://eduyatrabackend.onrender.com/api/exams/${examId}`, {
+      const response = await fetch(`${API_URL}/exams/${examId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, UserPlus } from "lucide-react";
 import axios from "axios";
+import { API_URL } from "@/config/api";
 
 interface Institute {
   _id: string;
@@ -102,21 +103,21 @@ export function StudentBatchList() {
 
         // Fetch institutes
         const institutesResponse = await axios.get<InstituteResponse>(
-          "https://eduyatrabackend.onrender.com/api/exams/institutes",
+          `${API_URL}/exams/institutes`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setInstitutes(institutesResponse.data.institutes);
 
         // Fetch courses
         const coursesResponse = await axios.get<CourseResponse>(
-          "https://eduyatrabackend.onrender.com/api/exams/courses",
+          `${API_URL}/exams/courses`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCourses(coursesResponse.data.courses);
 
         // Fetch classes
         const classesResponse = await axios.get<ClassesResponse>(
-          "https://eduyatrabackend.onrender.com/api/classes",
+          `${API_URL}/classes`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const classes = classesResponse.data.classes.map((cls) => ({
@@ -189,7 +190,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`,
+        `${API_URL}/classes/${batchId}/students/${studentId}`,
         { isSelected: selected },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -406,7 +407,7 @@ export function StudentBatchList() {
         });
 
         const response = await axios.post<ClassResponse>(
-          "https://eduyatrabackend.onrender.com/api/classes/create",
+          `${API_URL}/classes/create`,
           {
             class_name: batchName,
             invitation_code: invitationCode,
@@ -517,7 +518,7 @@ export function StudentBatchList() {
       }
 
       const response = await axios.post(
-        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students`,
+        `${API_URL}/classes/${editingBatchId}/students`,
         { students },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -597,7 +598,7 @@ export function StudentBatchList() {
       }
 
       await axios.patch(
-        `https://eduyatrabackend.onrender.com/api/classes/${editingBatchId}/students/${editingStudent.id}`,
+        `${API_URL}/classes/${editingBatchId}/students/${editingStudent.id}`,
         {
           name: newStudentName.trim(),
           email: newStudentEmail.trim(),
@@ -659,7 +660,7 @@ export function StudentBatchList() {
         return;
       }
 
-      await axios.delete(`https://eduyatrabackend.onrender.com/api/classes/${batchId}/students/${studentId}`, {
+      await axios.delete(`${API_URL}/classes/${batchId}/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -704,7 +705,7 @@ export function StudentBatchList() {
       console.log(`🗑️ Deleting batch: ${batch?.name} (ID: ${batchId})`);
 
       await axios.delete(
-        `https://eduyatrabackend.onrender.com/api/classes/${batchId}`,
+        `${API_URL}/classes/${batchId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

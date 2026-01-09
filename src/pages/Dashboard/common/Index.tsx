@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Plus, Users, FileText, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 interface DashboardData {
   totalStudents: number;
@@ -48,7 +49,7 @@ const Index = () => {
       console.log('📊 Fetching dashboard data...');
 
       // Fetch exams
-      const examsResponse = await fetch('https://eduyatrabackend.onrender.com/api/exams/all', {
+      const examsResponse = await fetch(`${API_URL}/exams/all`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -56,7 +57,7 @@ const Index = () => {
       });
 
       // Fetch classes
-      const classesResponse = await fetch('https://eduyatrabackend.onrender.com/api/classes', {
+      const classesResponse = await fetch(`${API_URL}/classes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
