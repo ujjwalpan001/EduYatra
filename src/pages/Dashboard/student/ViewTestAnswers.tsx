@@ -43,10 +43,22 @@ const ViewTestAnswers: React.FC = () => {
   const [submission, setSubmission] = useState<SubmissionDetails | null>(null);
   const [exam, setExam] = useState<ExamInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get user role from localStorage
+    const role = localStorage.getItem('role');
+    setUserRole(role);
     fetchTestAnswers();
   }, [submissionId]);
+
+  const handleBackNavigation = () => {
+    if (userRole === 'teacher') {
+      navigate('/performance/individual');
+    } else {
+      navigate('/student/enrollment');
+    }
+  };
 
   const fetchTestAnswers = async () => {
     try {
@@ -138,12 +150,12 @@ const ViewTestAnswers: React.FC = () => {
             </AlertDescription>
           </Alert>
           <Button 
-            onClick={() => navigate('/student/enrollment')} 
+            onClick={handleBackNavigation} 
             className="mt-4"
             variant="outline"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Enrollment
+            Back
           </Button>
         </div>
       </Layout>
@@ -156,7 +168,7 @@ const ViewTestAnswers: React.FC = () => {
         {/* Header */}
         <div className="mb-6">
           <Button 
-            onClick={() => navigate('/student/enrollment')} 
+            onClick={handleBackNavigation} 
             variant="ghost" 
             className="mb-4"
           >
@@ -318,12 +330,12 @@ const ViewTestAnswers: React.FC = () => {
         {/* Bottom Button */}
         <div className="mt-8 flex justify-center">
           <Button 
-            onClick={() => navigate('/student/enrollment')} 
+            onClick={handleBackNavigation} 
             size="lg"
             className="min-w-[200px]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Enrollment
+            Back
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Search, TrendingUp, Award, BookOpen, Clock, User, Mail, Calendar } from "lucide-react";
+import { Search, TrendingUp, Award, BookOpen, Clock, User, Mail, Calendar, Eye } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { API_URL } from "@/config/api";
@@ -43,6 +44,7 @@ interface Statistics {
 }
 
 interface RecentTest {
+  submission_id: string;
   exam_id: string;
   exam_name: string;
   subject: string;
@@ -82,6 +84,7 @@ interface DetailedAnalysisResponse {
 }
 
 const IndividualStudentAnalysis = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,6 +415,7 @@ const IndividualStudentAnalysis = () => {
                               <th className="text-right p-3 font-medium">Percentage</th>
                               <th className="text-right p-3 font-medium">Time</th>
                               <th className="text-left p-3 font-medium">Date</th>
+                              <th className="text-center p-3 font-medium">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -431,6 +435,17 @@ const IndividualStudentAnalysis = () => {
                                 </td>
                                 <td className="p-3 text-right">{test.time_spent_minutes} min</td>
                                 <td className="p-3 text-sm">{formatDateTime(test.submitted_at)}</td>
+                                <td className="p-3 text-center">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => navigate(`/teacher/test-answers/${test.submission_id}`)}
+                                    className="gap-2"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    View Answers
+                                  </Button>
+                                </td>
                               </tr>
                             ))}
                           </tbody>

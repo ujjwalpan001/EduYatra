@@ -77,6 +77,7 @@ const App = () => (
             <Route path="/performance/individual" element={<IndividualStudentAnalysis />} />
             <Route path="/performance/ongoing" element={<OngoingTestExam />} />
             <Route path="/manage-students" element={<ManageStudents />} />
+            <Route path="/teacher/test-answers/:submissionId" element={<ViewTestAnswers />} />
             <Route path="/student" element={<StudentIndex/>} />
             <Route path="/student/learn" element={<LearnByTopic />} />
             <Route path="/student/practice" element={<PracticeExams />} />
