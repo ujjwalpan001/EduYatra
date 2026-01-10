@@ -18,6 +18,29 @@ import { KatexRenderer } from '@/lib/katex-rendering';
 import 'katex/dist/katex.min.css';
 import { API_URL } from "@/config/api";
 
+// Shuffle array using Fisher-Yates algorithm with seed
+const shuffleArray = <T,>(array: T[], seed: number): T[] => {
+  const shuffled = [...array];
+  let currentIndex = shuffled.length;
+  let temporaryValue: T, randomIndex: number;
+  
+  // Seeded random function
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+  };
+  
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(seededRandom(seed++) * currentIndex);
+    currentIndex -= 1;
+    temporaryValue = shuffled[currentIndex];
+    shuffled[currentIndex] = shuffled[randomIndex];
+    shuffled[randomIndex] = temporaryValue;
+  }
+  
+  return shuffled;
+};
+
 // Utility function for authenticated API calls with enhanced error handling
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
@@ -66,6 +89,8 @@ const testFormSchema = z.object({
   numberOfSets: z.coerce.number().min(1, 'At least 1 set required'),
   numberOfQuestionsPerSet: z.coerce.number().min(1, 'At least 1 question per set'),
   instructions: z.string().optional(),
+  shuffleQuestions: z.boolean().optional(),
+  shuffleOptions: z.boolean().optional(),
 });
 
 const editExamSchema = z.object({
@@ -74,6 +99,8 @@ const editExamSchema = z.object({
   numberOfSets: z.coerce.number().min(1, 'At least 1 set required'),
   numberOfQuestionsPerSet: z.coerce.number().min(1, 'At least 1 question per set'),
   instructions: z.string().optional(),
+  shuffleQuestions: z.boolean().optional(),
+  shuffleOptions: z.boolean().optional(),
 });
 
 type TestFormValues = z.infer<typeof testFormSchema>;
@@ -105,6 +132,8 @@ interface Exam {
   numberOfQuestionsPerSet: number;
   instructions?: string;
   questionIds: string[];
+  shuffleQuestions?: boolean;
+  shuffleOptions?: boolean;
   isPublished?: boolean; // Track if exam is assigned to a group
   isEnded?: boolean; // Track if exam has ended
   endTime?: string; // Track when exam ends
@@ -156,7 +185,7 @@ const ConductTestOnline: React.FC = () => {
   const manageExamRef = useRef<HTMLDivElement>(null);
   const previewQuestionPaperRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<TestFormValues>({
+  const { register, handleSubmit, formState: { errors }, watch, reset, setValue } = useForm<TestFormValues>({
     resolver: zodResolver(testFormSchema),
     defaultValues: {
       testName: '',
@@ -164,10 +193,12 @@ const ConductTestOnline: React.FC = () => {
       numberOfSets: 1,
       numberOfQuestionsPerSet: 1,
       instructions: '',
+      shuffleQuestions: true,
+      shuffleOptions: true,
     },
   });
 
-  const { register: registerEdit, handleSubmit: handleEditSubmit, formState: { errors: editErrors }, reset: resetEdit } = useForm<EditExamFormValues>({
+  const { register: registerEdit, handleSubmit: handleEditSubmit, formState: { errors: editErrors }, reset: resetEdit, watch: watchEdit, setValue: setValueEdit } = useForm<EditExamFormValues>({
     resolver: zodResolver(editExamSchema),
     defaultValues: {
       testName: '',
@@ -175,6 +206,8 @@ const ConductTestOnline: React.FC = () => {
       numberOfSets: 1,
       numberOfQuestionsPerSet: 1,
       instructions: '',
+      shuffleQuestions: true,
+      shuffleOptions: true,
     },
   });
 
@@ -302,7 +335,7 @@ const ConductTestOnline: React.FC = () => {
     fetchQuestions();
   }, [questionBankId]);
 
-  // Sync edit form with selected exam
+  // Sync edit form with selected exam AND fetch questions for preview
   useEffect(() => {
     const exam = exams.find(e => e.id === selectedExamId);
     if (exam) {
@@ -312,9 +345,36 @@ const ConductTestOnline: React.FC = () => {
         numberOfSets: exam.numberOfSets,
         numberOfQuestionsPerSet: exam.numberOfQuestionsPerSet,
         instructions: exam.instructions || '',
+        shuffleQuestions: exam.shuffleQuestions ?? true,
+        shuffleOptions: exam.shuffleOptions ?? true,
       });
       setTimeLimit(exam.duration.toString());
       setCustomTimeLimit('');
+      
+      // Fetch question details for preview
+      const fetchExamQuestions = async () => {
+        if (exam.questionIds && exam.questionIds.length > 0) {
+          try {
+            const res = await fetchWithAuth(`${API_URL}/exams/questions-by-ids`, {
+              method: 'POST',
+              body: JSON.stringify({ questionIds: exam.questionIds }),
+            });
+            const data = await res.json();
+            if (res.ok && data.questions) {
+              setQuestions(data.questions.map((q: any) => ({
+                id: q._id,
+                text: q.latex_code || 'Untitled Question',
+                type: q.question_type || 'MCQ',
+                marks: q.difficulty_rating || 1,
+              })));
+            }
+          } catch (error) {
+            console.error('Error fetching exam questions:', error);
+          }
+        }
+      };
+      
+      fetchExamQuestions();
     }
   }, [selectedExamId, exams, resetEdit]);
 
@@ -476,6 +536,8 @@ const ConductTestOnline: React.FC = () => {
           number_of_sets: data.numberOfSets,
           number_of_questions_per_set: data.numberOfQuestionsPerSet,
           description: data.instructions,
+          shuffle_questions: data.shuffleQuestions || false,
+          shuffle_options: data.shuffleOptions || false,
         }),
       });
       if (!res.ok) {
@@ -592,8 +654,8 @@ const ConductTestOnline: React.FC = () => {
       duration_minutes: data.duration,
       is_published: false,
       allow_review: true,
-      shuffle_questions: true,
-      shuffle_options: false,
+      shuffle_questions: data.shuffleQuestions || false,
+      shuffle_options: data.shuffleOptions || false,
       security_settings: securitySettings,
     };
 
@@ -728,6 +790,30 @@ const ConductTestOnline: React.FC = () => {
                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground prioritize-visible:outline-none prioritize-visible:ring-2 prioritize-visible:ring-ring prioritize-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     {...register('instructions')}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="shuffleQuestions"
+                      checked={watch('shuffleQuestions')}
+                      onCheckedChange={(checked) => setValue('shuffleQuestions', checked)}
+                    />
+                    <Label htmlFor="shuffleQuestions" className="cursor-pointer">
+                      Shuffle Questions
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="shuffleOptions"
+                      checked={watch('shuffleOptions')}
+                      onCheckedChange={(checked) => setValue('shuffleOptions', checked)}
+                    />
+                    <Label htmlFor="shuffleOptions" className="cursor-pointer">
+                      Shuffle Options
+                    </Label>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1056,6 +1142,30 @@ const ConductTestOnline: React.FC = () => {
                             />
                           </div>
 
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="editShuffleQuestions"
+                                checked={watchEdit('shuffleQuestions')}
+                                onCheckedChange={(checked) => setValueEdit('shuffleQuestions', checked)}
+                              />
+                              <Label htmlFor="editShuffleQuestions" className="cursor-pointer">
+                                Shuffle Questions
+                              </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id="editShuffleOptions"
+                                checked={watchEdit('shuffleOptions')}
+                                onCheckedChange={(checked) => setValueEdit('shuffleOptions', checked)}
+                              />
+                              <Label htmlFor="editShuffleOptions" className="cursor-pointer">
+                                Shuffle Options
+                              </Label>
+                            </div>
+                          </div>
+
                           <Button type="submit" className="w-full">
                             <Save className="h-4 w-4 mr-2" />
                             Save Exam Changes
@@ -1072,29 +1182,37 @@ const ConductTestOnline: React.FC = () => {
                       </Button>
                       {showQuestionSets && (
                         exams.find(exam => exam.id === selectedExamId)?.questionIds.length ? (
-                          Array.from({ length: exams.find(exam => exam.id === selectedExamId)?.numberOfSets || 1 }, (_, setIndex) => (
-                            <div key={setIndex} className="p-4 bg-muted/50 rounded">
-                              <h4 className="font-medium">Set {setIndex + 1}</h4>
-                              <ul className="mt-2 space-y-2">
-                                {exams.find(exam => exam.id === selectedExamId)?.questionIds
-                                  .slice(0, exams.find(exam => exam.id === selectedExamId)?.numberOfQuestionsPerSet)
-                                  .map((questionId, qIndex) => (
-                                    <li key={questionId} className="text-sm">
-                                      Question {qIndex + 1}: <KatexRenderer>{questions.find(q => q.id === questionId)?.text || `Question ${questionId}`}</KatexRenderer>
-                                      <span className="text-muted-foreground"> ({questions.find(q => q.id === questionId)?.type || 'MCQ'}, {questions.find(q => q.id === questionId)?.marks || 1} marks)</span>
-                                    </li>
-                                  ))}
-                              </ul>
-                            </div>
-                          ))
+                          Array.from({ length: exams.find(exam => exam.id === selectedExamId)?.numberOfSets || 1 }, (_, setIndex) => {
+                            const selectedExam = exams.find(exam => exam.id === selectedExamId);
+                            const questionsPerSet = selectedExam?.numberOfQuestionsPerSet || 0;
+                            
+                            // Only shuffle if shuffleQuestions is enabled
+                            const questionIds = selectedExam?.questionIds || [];
+                            const setQuestions = selectedExam?.shuffleQuestions 
+                              ? shuffleArray(questionIds, setIndex).slice(0, questionsPerSet)
+                              : questionIds.slice(setIndex * questionsPerSet, (setIndex + 1) * questionsPerSet);
+                            
+                            return (
+                              <div key={setIndex} className="p-4 bg-muted/50 rounded">
+                                <h4 className="font-medium">Set {setIndex + 1}</h4>
+                                <ul className="mt-2 space-y-2">
+                                  {setQuestions.map((questionId, qIndex) => {
+                                    const question = questions.find(q => q.id === questionId);
+                                    return (
+                                      <li key={questionId} className="text-sm">
+                                        Question {qIndex + 1}: <KatexRenderer>{question?.text || `Question ${questionId}`}</KatexRenderer>
+                                        <span className="text-muted-foreground"> ({question?.type || 'MCQ'}, {question?.marks || 1} marks)</span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </div>
+                            );
+                          })
                         ) : (
                           <p className="text-sm text-destructive">No questions assigned to this exam</p>
                         )
                       )}
-                      <Button onClick={handlePreviewQuestionPaper} className="w-full">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview Full Question Paper
-                      </Button>
                     </div>
                   </>
                 )}
