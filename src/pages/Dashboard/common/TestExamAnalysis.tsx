@@ -4,8 +4,9 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { BarChart3, TrendingUp, Users, Clock, Download, Eye } from "lucide-react";
+import { BarChart3, TrendingUp, Users, Clock, Download, Eye, Lock, Unlock } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { API_URL } from "@/config/api";
@@ -33,6 +34,8 @@ interface ExamAnalysisData {
   participants: number;
   avgScore: number;
   avgTimeSpent: number;
+  score_released: boolean;
+  answers_released: boolean;
 }
 
 interface AnalysisSummary {
@@ -114,6 +117,64 @@ const TestExamAnalysis = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleToggleScoreRelease = async (examId: string, currentValue: boolean) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("❌ Please log in to continue");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/exams/${examId}/toggle-score-release`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        // Update local state
+        setExams(exams.map(exam => 
+          exam.exam_id === examId 
+            ? { ...exam, score_released: !currentValue }
+            : exam
+        ));
+      }
+    } catch (error: any) {
+      console.error("Error toggling score release:", error);
+      toast.error(error.response?.data?.error || "Failed to update score release");
+    }
+  };
+
+  const handleToggleAnswerRelease = async (examId: string, currentValue: boolean) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("❌ Please log in to continue");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/exams/${examId}/toggle-answer-release`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        // Update local state
+        setExams(exams.map(exam => 
+          exam.exam_id === examId 
+            ? { ...exam, answers_released: !currentValue }
+            : exam
+        ));
+      }
+    } catch (error: any) {
+      console.error("Error toggling answer release:", error);
+      toast.error(error.response?.data?.error || "Failed to update answer release");
+    }
   };
 
   const handleViewParticipants = async (exam: ExamAnalysisData) => {
@@ -253,44 +314,77 @@ const TestExamAnalysis = () => {
             ) : (
               <div className="space-y-4">
                 {exams.map((exam, index) => (
-                  <div key={exam.exam_id} className="flex justify-between items-center p-4 border rounded-lg hover:bg-accent/20 transition-colors animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="flex-1">
-                        <p className="font-medium">{exam.exam_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(exam.date)} • {exam.course}
-                        </p>
-                        <Button
-                          variant="link"
+                  <div key={exam.exam_id} className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/20 transition-colors animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="flex-1">
+                          <p className="font-medium">{exam.exam_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(exam.date)} • {exam.course}
+                          </p>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-xs text-primary hover:underline"
+                            onClick={() => handleViewParticipants(exam)}
+                          >
+                            <Users className="h-3 w-3 mr-1" />
+                            {exam.participants} participants
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-bold text-primary">{exam.avgScore.toFixed(1)}%</p>
+                          <p className="text-xs text-muted-foreground">Average Score</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{exam.avgTimeSpent} min</p>
+                          <p className="text-xs text-muted-foreground">Avg Time</p>
+                        </div>
+                        <Badge variant={getStatusColor(exam.status) as "default" | "secondary" | "outline"}>
+                          {exam.status}
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
                           size="sm"
-                          className="p-0 h-auto text-xs text-primary hover:underline"
                           onClick={() => handleViewParticipants(exam)}
+                          title="View participants"
                         >
-                          <Users className="h-3 w-3 mr-1" />
-                          {exam.participants} participants
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{exam.avgScore.toFixed(1)}%</p>
-                        <p className="text-xs text-muted-foreground">Average Score</p>
+                    
+                    {/* Release Controls */}
+                    <div className="flex items-center gap-6 pl-2 pt-2 border-t">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {exam.score_released ? <Unlock className="h-4 w-4 text-green-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
+                          <span className="text-sm font-medium">Release Score</span>
+                        </div>
+                        <Switch
+                          checked={exam.score_released}
+                          onCheckedChange={() => handleToggleScoreRelease(exam.exam_id, exam.score_released)}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {exam.score_released ? 'Scores visible to students' : 'Scores hidden from students'}
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">{exam.avgTimeSpent} min</p>
-                        <p className="text-xs text-muted-foreground">Avg Time</p>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {exam.answers_released ? <Unlock className="h-4 w-4 text-green-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
+                          <span className="text-sm font-medium">Release Answers</span>
+                        </div>
+                        <Switch
+                          checked={exam.answers_released}
+                          onCheckedChange={() => handleToggleAnswerRelease(exam.exam_id, exam.answers_released)}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {exam.answers_released ? 'Answers visible to students' : 'Answers hidden from students'}
+                        </span>
                       </div>
-                      <Badge variant={getStatusColor(exam.status) as "default" | "secondary" | "outline"}>
-                        {exam.status}
-                      </Badge>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleViewParticipants(exam)}
-                        title="View participants"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}

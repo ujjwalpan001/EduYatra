@@ -199,6 +199,15 @@ const Enrollment: React.FC = () => {
         if (data.success && data.attendedTests) {
           console.log('✅ Setting attended tests:', data.attendedTests);
           console.log('📈 Number of attended tests:', data.attendedTests.length);
+          // Log the first test's release status for debugging
+          if (data.attendedTests.length > 0) {
+            console.log('🔍 First test release status:', {
+              test: data.attendedTests[0].test,
+              scoreReleased: data.attendedTests[0].scoreReleased,
+              answersReleased: data.attendedTests[0].answersReleased,
+              score: data.attendedTests[0].score
+            });
+          }
           setAttendedTests(data.attendedTests);
         } else {
           console.warn('⚠️ No attended tests in response or success=false');
@@ -411,10 +420,21 @@ const Enrollment: React.FC = () => {
                                   </div>
                                 </div>
                                 <div className="text-right space-y-2">
-                                  <div className="text-2xl font-bold text-blue-500">{result.score}%</div>
-                                  <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'}>
-                                    Grade: {result.grade}
-                                  </Badge>
+                                  {result.scoreReleased === true ? (
+                                    <>
+                                      <div className="text-2xl font-bold text-blue-500">{result.score}%</div>
+                                      <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'}>
+                                        Grade: {result.grade}
+                                      </Badge>
+                                    </>
+                                  ) : (
+                                    <div className="flex items-center gap-2 text-amber-600">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                      </svg>
+                                      <span className="text-sm font-semibold">Score Pending</span>
+                                    </div>
+                                  )}
                                   <div className="flex gap-2">
                                     <Button 
                                       variant="outline" 
@@ -428,11 +448,12 @@ const Enrollment: React.FC = () => {
                                     <Button 
                                       variant="default" 
                                       size="sm" 
-                                      className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
-                                      onClick={() => navigate(`/student/test-answers/${result._id}`)}
+                                      className={`${result.answersReleased === true ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'} text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300`}
+                                      onClick={() => result.answersReleased === true && navigate(`/student/test-answers/${result._id}`)}
+                                      disabled={result.answersReleased !== true}
                                     >
                                       <BookOpen className="h-4 w-4 mr-1" />
-                                      View Answers
+                                      {result.answersReleased === true ? 'View Answers' : '🔒 Answers Locked'}
                                     </Button>
                                   </div>
                                 </div>
@@ -448,8 +469,14 @@ const Enrollment: React.FC = () => {
                                 <div className="space-y-2 text-gray-700">
                                   <p><strong>Test Name:</strong> {result.test}</p>
                                   <p><strong>Instructor:</strong> {result.instructor}</p>
-                                  <p><strong>Score:</strong> {result.score}%</p>
-                                  <p><strong>Grade:</strong> {result.grade}</p>
+                                  {result.scoreReleased === true ? (
+                                    <>
+                                      <p><strong>Score:</strong> {result.score}%</p>
+                                      <p><strong>Grade:</strong> {result.grade}</p>
+                                    </>
+                                  ) : (
+                                    <p className="text-amber-600 font-semibold">🔒 Score not yet released by instructor</p>
+                                  )}
                                   <p><strong>Date:</strong> {result.date}</p>
                                   <p><strong>Total Questions:</strong> {result.totalQuestions}</p>
                                   {result.correctAnswers !== undefined && (
@@ -482,15 +509,17 @@ const Enrollment: React.FC = () => {
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-green-500">
-                              {attendedTests.length > 0 
-                                ? (attendedTests.reduce((sum, t) => sum + t.score, 0) / attendedTests.length).toFixed(1)
-                                : 0}%
+                              {attendedTests.length > 0 && attendedTests.filter(t => t.scoreReleased === true).length > 0
+                                ? (attendedTests.filter(t => t.scoreReleased === true).reduce((sum, t) => sum + t.score, 0) / attendedTests.filter(t => t.scoreReleased === true).length).toFixed(1)
+                                : '—'}%
                             </div>
                             <p className="text-sm text-gray-500">Average Score</p>
                           </div>
                           <div className="text-center">
                             <div className="text-2xl font-bold text-blue-500">
-                              {attendedTests.length > 0 ? Math.max(...attendedTests.map(t => t.score)) : 0}%
+                              {attendedTests.length > 0 && attendedTests.filter(t => t.scoreReleased === true).length > 0
+                                ? Math.max(...attendedTests.filter(t => t.scoreReleased === true).map(t => t.score))
+                                : '—'}%
                             </div>
                             <p className="text-sm text-gray-500">Best Score</p>
                           </div>
