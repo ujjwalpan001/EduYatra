@@ -1,12 +1,24 @@
 // frontend/src/pages/admin/QuestionBanks.tsx
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, BookOpen, FileQuestion } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, BookOpen, FileQuestion } from 'lucide-react';
 import { 
   listAllQuestionBanks, 
   deleteQuestionBank, 
   createQuestionBank,
   updateQuestionBank 
 } from '../../lib/api/admin';
+import {
+  AdminPageLayout,
+  AdminPageHeader,
+  AdminFilterSection,
+  AdminSearchInput,
+  AdminSelect,
+  AdminButton,
+  AdminCard,
+  AdminBadge,
+  AdminLoading,
+  AdminModal,
+} from '../../components/admin';
 
 const QuestionBanks: React.FC = () => {
   const [banks, setBanks] = useState<any[]>([]);

@@ -232,23 +232,23 @@ const SignUp = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <a href="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6 transition-colors">
+        <a href="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4 sm:mb-6 transition-colors text-sm sm:text-base">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Home
         </a>
 
         <Card className="shadow-xl border-0">
-          <CardHeader className="text-center pb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-white" />
+          <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Sign Up for EduYatra</h1>
-            <p className="text-gray-600">Join thousands of learners achieving their goals</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sign Up for EduYatra</h1>
+            <p className="text-sm sm:text-base text-gray-600">Join thousands of learners achieving their goals</p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>

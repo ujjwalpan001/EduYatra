@@ -253,106 +253,202 @@ const Admins: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Management</h1>
-          <p className="text-gray-600 mt-1">Manage administrator accounts and permissions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Admin Management
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Manage administrator accounts and permissions
+          </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md"
           >
-            <Plus size={20} />
-            Add Admin
+            <Plus size={18} />
+            <span className="text-sm sm:text-base">Add Admin</span>
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      {/* Filter Section */}
+      <div className="glass-effect rounded-xl border border-primary/10 p-3 sm:p-4 animate-slide-in">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <input
               type="text"
               placeholder="Search admins by name, email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 text-sm bg-background border border-primary/20 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-3 animate-slide-in" style={{ animationDelay: '0.1s' }}>
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          admins.map((admin, index) => (
+            <div
+              key={admin._id}
+              className="glass-effect rounded-xl border border-primary/10 p-4 animate-slide-in hover:border-primary/30 transition-all"
+              style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white shadow-md">
+                    <Shield size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                      {admin.username || admin.fullName || admin.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground truncate">{admin.email}</p>
+                  </div>
+                </div>
+                {admin.account_locked_until ? (
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                    Suspended
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                    Active
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2 mb-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Institution:</span>
+                  <span className="font-medium text-foreground">{admin.institution || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Joined:</span>
+                  <span className="font-medium text-foreground">{new Date(admin.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">ID:</span>
+                  <span className="font-mono text-foreground">{admin._id.slice(-6)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-3 border-t border-primary/10">
+                {isSuperAdmin && admin.email !== 'admin@gmail.com' && (
+                  <button
+                    onClick={() => openPermissionsModal(admin)}
+                    className="flex-1 py-2 text-xs text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors font-medium"
+                  >
+                    <Settings size={14} className="inline mr-1" />
+                    Permissions
+                  </button>
+                )}
+                <button className="flex-1 py-2 text-xs text-primary hover:bg-primary/10 rounded-lg transition-colors font-medium">
+                  <Edit size={14} className="inline mr-1" />
+                  Edit
+                </button>
+                {admin.account_locked_until ? (
+                  <button
+                    onClick={() => handleActivate(admin._id)}
+                    className="p-2 text-green-600 dark:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+                  >
+                    <Unlock size={14} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSuspend(admin._id)}
+                    className="p-2 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                  >
+                    <Lock size={14} />
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(admin._id)}
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block glass-effect rounded-xl border border-primary/10 overflow-hidden animate-slide-in" style={{ animationDelay: '0.2s' }}>
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted/50 border-b border-primary/10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Admin
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Institution
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Joined
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card/50 divide-y divide-primary/10">
                   {admins.map((admin) => (
-                    <tr key={admin._id} className="hover:bg-gray-50">
+                    <tr key={admin._id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-red-600 rounded-full flex items-center justify-center text-white font-semibold">
-                            <Shield size={20} />
+                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white shadow-md">
+                            <Shield size={18} />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-foreground">
                               {admin.username || admin.fullName || admin.name}
                             </div>
-                            <div className="text-sm text-gray-500">ID: {admin._id.slice(-6)}</div>
+                            <div className="text-xs text-muted-foreground">ID: {admin._id.slice(-6)}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {admin.email}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {admin.institution || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {admin.account_locked_until ? (
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
                             Suspended
                           </span>
                         ) : (
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
                             Active
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {new Date(admin.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -360,38 +456,38 @@ const Admins: React.FC = () => {
                           {isSuperAdmin && admin.email !== 'admin@gmail.com' && (
                             <button
                               onClick={() => openPermissionsModal(admin)}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
                               title="Manage Permissions"
                             >
-                              <Settings size={18} />
+                              <Settings size={16} />
                             </button>
                           )}
-                          <button className="text-blue-600 hover:text-blue-900" title="Edit">
-                            <Edit size={18} />
+                          <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit">
+                            <Edit size={16} />
                           </button>
                           {admin.account_locked_until ? (
                             <button
                               onClick={() => handleActivate(admin._id)}
-                              className="text-green-600 hover:text-green-900"
+                              className="p-2 text-green-600 dark:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
                               title="Activate"
                             >
-                              <Unlock size={18} />
+                              <Unlock size={16} />
                             </button>
                           ) : (
                             <button
                               onClick={() => handleSuspend(admin._id)}
-                              className="text-yellow-600 hover:text-yellow-900"
+                              className="p-2 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors"
                               title="Suspend"
                             >
-                              <Lock size={18} />
+                              <Lock size={16} />
                             </button>
                           )}
                           <button
                             onClick={() => handleDelete(admin._id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Delete"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -401,28 +497,28 @@ const Admins: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
+            {/* Desktop Pagination */}
             {pagination && (
-              <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-                <div className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(page - 1) * pagination.limit + 1}</span> to{' '}
-                  <span className="font-medium">
+              <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-primary/10 bg-muted/30">
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Showing <span className="font-medium text-foreground">{(page - 1) * pagination.limit + 1}</span> to{' '}
+                  <span className="font-medium text-foreground">
                     {Math.min(page * pagination.limit, pagination.total)}
                   </span>{' '}
-                  of <span className="font-medium">{pagination.total}</span> results
+                  of <span className="font-medium text-foreground">{pagination.total}</span> results
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2 text-sm border border-primary/20 rounded-lg hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page === pagination.pages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2 text-sm border border-primary/20 rounded-lg hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Next
                   </button>
@@ -432,6 +528,31 @@ const Admins: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Mobile Pagination */}
+      {!loading && pagination && (
+        <div className="block md:hidden px-4 py-3 glass-effect rounded-xl border border-primary/10">
+          <div className="text-xs text-center text-muted-foreground mb-3">
+            Page {page} of {pagination.pages} ({pagination.total} admins)
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              className="flex-1 px-4 py-2 text-sm border border-primary/20 rounded-lg hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page === pagination.pages}
+              className="flex-1 px-4 py-2 text-sm border border-primary/20 rounded-lg hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create Admin Modal */}
       {showModal && (

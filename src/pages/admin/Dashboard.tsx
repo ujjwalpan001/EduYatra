@@ -87,42 +87,47 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-1">Welcome back! Here's what's happening today.</p>
+      <div className="animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          Dashboard Overview
+        </h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          Welcome back! Here's what's happening today.
+        </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {statCards.map((card, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+            className="glass-effect rounded-xl border border-primary/10 p-4 sm:p-6 hover:border-primary/30 transition-all animate-slide-in"
+            style={{ animationDelay: `${index * 0.1}s` }}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 font-medium">{card.title}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
+              <div className="flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">{card.title}</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mt-2">{card.value}</p>
                 <div className="flex items-center gap-1 mt-2">
                   {card.trendUp ? (
-                    <TrendingUp className="text-green-500" size={16} />
+                    <TrendingUp className="text-green-500 dark:text-green-400" size={14} />
                   ) : (
-                    <TrendingDown className="text-red-500" size={16} />
+                    <TrendingDown className="text-red-500 dark:text-red-400" size={14} />
                   )}
                   <span
-                    className={`text-sm font-semibold ${
-                      card.trendUp ? 'text-green-500' : 'text-red-500'
+                    className={`text-xs sm:text-sm font-semibold ${
+                      card.trendUp ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
                     }`}
                   >
                     {card.trend}
                   </span>
-                  <span className="text-sm text-gray-500">vs last month</span>
+                  <span className="text-xs text-muted-foreground hidden sm:inline">vs last month</span>
                 </div>
               </div>
-              <div className={`${card.color} p-4 rounded-full`}>
-                <card.icon className="text-white" size={24} />
+              <div className={`${card.color} p-3 sm:p-4 rounded-full shadow-lg`}>
+                <card.icon className="text-white" size={20} />
               </div>
             </div>
           </div>
@@ -130,44 +135,48 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Analytics Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Last 30 Days Analytics</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">New Users</span>
-              <span className="font-semibold text-gray-900">{analytics?.newUsers || 0}</span>
+        <div className="glass-effect rounded-xl border border-primary/10 p-4 sm:p-6 animate-slide-in" style={{ animationDelay: '0.6s' }}>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Last 30 Days Analytics
+          </h3>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/30 transition-colors">
+              <span className="text-xs sm:text-sm text-muted-foreground">New Users</span>
+              <span className="font-semibold text-sm sm:text-base text-foreground">{analytics?.newUsers || 0}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">New Classes</span>
-              <span className="font-semibold text-gray-900">{analytics?.newClasses || 0}</span>
+            <div className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/30 transition-colors">
+              <span className="text-xs sm:text-sm text-muted-foreground">New Classes</span>
+              <span className="font-semibold text-sm sm:text-base text-foreground">{analytics?.newClasses || 0}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Completed Exams</span>
-              <span className="font-semibold text-gray-900">{analytics?.completedExams || 0}</span>
+            <div className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/30 transition-colors">
+              <span className="text-xs sm:text-sm text-muted-foreground">Completed Exams</span>
+              <span className="font-semibold text-sm sm:text-base text-foreground">{analytics?.completedExams || 0}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Users</span>
-              <span className="font-semibold text-gray-900">{analytics?.activeUsers || 0}</span>
+            <div className="flex justify-between items-center p-2 rounded-lg hover:bg-muted/30 transition-colors">
+              <span className="text-xs sm:text-sm text-muted-foreground">Active Users</span>
+              <span className="font-semibold text-sm sm:text-base text-foreground">{analytics?.activeUsers || 0}</span>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+        <div className="glass-effect rounded-xl border border-primary/10 p-4 sm:p-6 animate-slide-in" style={{ animationDelay: '0.7s' }}>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Quick Actions
+          </h3>
+          <div className="space-y-2 sm:space-y-3">
+            <button className="w-full py-2 sm:py-3 px-4 text-sm sm:text-base bg-gradient-to-r from-primary to-primary/80 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md">
               Add New User
             </button>
-            <button className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            <button className="w-full py-2 sm:py-3 px-4 text-sm sm:text-base bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md">
               Create Class
             </button>
-            <button className="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <button className="w-full py-2 sm:py-3 px-4 text-sm sm:text-base bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md">
               Upload Questions
             </button>
-            <button className="w-full py-3 px-4 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+            <button className="w-full py-2 sm:py-3 px-4 text-sm sm:text-base bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md">
               View Reports
             </button>
           </div>
@@ -175,20 +184,22 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* System Status */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-gray-700">Server Status: <span className="font-semibold">Operational</span></span>
+      <div className="glass-effect rounded-xl border border-primary/10 p-4 sm:p-6 animate-slide-in" style={{ animationDelay: '0.8s' }}>
+        <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          System Status
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full shadow-lg shadow-green-500/50"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground">Server: <span className="font-semibold text-foreground">Operational</span></span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-gray-700">Database: <span className="font-semibold">Healthy</span></span>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full shadow-lg shadow-green-500/50"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground">Database: <span className="font-semibold text-foreground">Healthy</span></span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <span className="text-gray-700">API Response: <span className="font-semibold">Moderate</span></span>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+            <div className="w-3 h-3 bg-yellow-500 dark:bg-yellow-400 rounded-full shadow-lg shadow-yellow-500/50"></div>
+            <span className="text-xs sm:text-sm text-muted-foreground">API: <span className="font-semibold text-foreground">Moderate</span></span>
           </div>
         </div>
       </div>

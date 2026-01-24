@@ -1,7 +1,5 @@
 
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { TopNavigation } from "@/components/TopNavigation";
+import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,22 +85,18 @@ const Index = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-accent/10 to-primary/5">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden ml-16">
-          <TopNavigation />
-          <main className="flex-1 p-6 space-y-8 overflow-auto">
-            <div className="flex items-center justify-between animate-fade-in">
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  Student Dashboard
-                </h1>
-                <p className="text-muted-foreground mt-2">Welcome back! Continue your learning journey.</p>
-              </div>
-            </div>
+    <Layout>
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8">
+        <div className="flex items-center justify-between animate-fade-in">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Student Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Welcome back! Continue your learning journey.</p>
+          </div>
+        </div>
 
-            {/* Learn by Topic Section */}
+        {/* Learn by Topic Section */}
             <Card className="glass-effect border-primary/20 animate-fade-in hover-lift">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -111,7 +105,7 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     { topic: "Algebra", icon: "📐", progress: 75, lessons: 12 },
                     { topic: "Geometry", icon: "📏", progress: 60, lessons: 8 },
@@ -119,7 +113,7 @@ const Index = () => {
                     { topic: "Statistics", icon: "📊", progress: 90, lessons: 10 },
                   ].map((topic, index) => (
                     <Card key={topic.topic} className="border-2 transition-all duration-200 hover:shadow-lg animate-scale-in hover:border-primary/40" style={{ animationDelay: `${index * 100}ms` }}>
-                      <CardContent className="p-4 text-center">
+                      <CardContent className="p-3 sm:p-4 text-center">
                         <div className="text-3xl mb-2">{topic.icon}</div>
                         <h3 className="font-medium mb-2">{topic.topic}</h3>
                         <div className="space-y-2 mb-3">
@@ -180,14 +174,14 @@ const Index = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {[
                     { title: "Math Quiz 1", subject: "Mathematics", duration: "45 min", difficulty: "Easy", questions: 25 },
                     { title: "Physics Test", subject: "Physics", duration: "60 min", difficulty: "Medium", questions: 30 },
                     { title: "Chemistry Mock", subject: "Chemistry", duration: "90 min", difficulty: "Hard", questions: 40 },
                   ].map((exam, index) => (
                     <Card key={exam.title} className="border-2 transition-all duration-200 hover:shadow-lg animate-slide-in hover:border-primary/40" style={{ animationDelay: `${index * 100}ms` }}>
-                      <CardContent className="p-4">
+                      <CardContent className="p-3 sm:p-4">
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-medium">{exam.title}</h3>
                           <Badge variant={exam.difficulty === 'Hard' ? 'destructive' : exam.difficulty === 'Medium' ? 'default' : 'secondary'}>
@@ -402,11 +396,9 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-};
+          </div>
+        </Layout>
+      );
+    };
 
-export default Index;
+    export default Index;

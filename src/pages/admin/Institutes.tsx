@@ -1,6 +1,6 @@
 // frontend/src/pages/admin/Institutes.tsx
 import React, { useEffect, useState } from 'react';
-import { Search, Plus, Edit, Trash2, Building2, Users, Shield } from 'lucide-react';
+import { Plus, Edit, Trash2, Building2, Users, Shield } from 'lucide-react';
 import { listInstitutes, createInstitute, updateInstitute, deleteInstitute } from '../../lib/api/admin';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,11 +30,12 @@ const Institutes: React.FC = () => {
   
   if (!isSuperAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Shield size={64} className="text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-        <p className="text-gray-600">Only super admin can access this page.</p>
-      </div>
+      <AdminPageLayout>
+        <AdminEmptyState
+          message="Access Denied. Only super admin can access this page."
+          icon={<Shield size={64} className="text-muted-foreground" />}
+        />
+      </AdminPageLayout>
     );
   }
 

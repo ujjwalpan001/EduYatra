@@ -1,7 +1,7 @@
-import { Sun, Moon, User, Bell, Settings, Edit, Eye, Save, X, Camera } from "lucide-react";
+import { Sun, Moon, User, Bell, Settings, Edit, Eye, Save, X, Camera, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Add Label import
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -23,10 +23,13 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { toast } from "sonner"; // Add toast import
+import { toast } from "sonner";
+import { API_URL } from "@/config/api";
 
 interface TopNavigationProps {
   role?: "student" | "teacher";
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (open: boolean) => void;
 }
 
 interface Profile {
@@ -149,7 +152,7 @@ function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setPro
             <span>View Profile</span>
           </DropdownMenuItem>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
           <DialogHeader>
             <DialogTitle>Profile</DialogTitle>
           </DialogHeader>
@@ -201,7 +204,7 @@ function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setPro
             <span>Edit Profile</span>
           </DropdownMenuItem>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
@@ -315,7 +318,7 @@ function ProfileDialog({ profile, setProfile, role }: { profile: Profile; setPro
   );
 }
 
-function StudentTopNavigation() {
+function StudentTopNavigation({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen?: boolean; setMobileMenuOpen?: (open: boolean) => void }) {
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>(() => {
     const savedProfile = localStorage.getItem("userProfile");
@@ -353,33 +356,43 @@ function StudentTopNavigation() {
   });
 
   return (
-    <nav className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="flex items-center space-x-4">
-          <div className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+    <nav className="h-14 md:h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="flex items-center justify-between h-full px-3 md:px-6">
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden h-8 w-8"
+            onClick={() => setMobileMenuOpen?.(!mobileMenuOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
+          <div className="text-base md:text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             Deskoros
           </div>
-          <span className="text-sm text-muted-foreground">Student Portal</span>
+          <span className="hidden sm:block text-xs md:text-sm text-muted-foreground">Student Portal</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
-            <Bell className="h-5 w-5" />
+        <div className="flex items-center space-x-1 md:space-x-2">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 h-8 w-8 md:h-10 md:w-10">
+            <Bell className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full hover:bg-primary/10"
+            className="rounded-full hover:bg-primary/10 h-8 w-8 md:h-10 md:w-10"
           >
-            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
+              <Button variant="ghost" className="relative h-8 w-8 md:h-10 md:w-10 rounded-full">
+                <Avatar className="h-8 w-8 md:h-10 md:w-10">
                   <AvatarImage src={profile.avatar} alt={profile.name} />
                   <AvatarFallback className="bg-primary/20 text-primary">
-                    <User className="h-5 w-5" />
+                    <User className="h-4 w-4 md:h-5 md:w-5" />
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -416,7 +429,7 @@ function StudentTopNavigation() {
   );
 }
 
-function TeacherTopNavigation() {
+function TeacherTopNavigation({ mobileMenuOpen, setMobileMenuOpen }: { mobileMenuOpen?: boolean; setMobileMenuOpen?: (open: boolean) => void }) {
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<Profile>(() => {
     const savedProfile = localStorage.getItem("userProfile");
@@ -452,33 +465,43 @@ function TeacherTopNavigation() {
   });
 
   return (
-    <nav className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="flex items-center space-x-4">
-          <div className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+    <nav className="h-14 md:h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="flex items-center justify-between h-full px-3 md:px-6">
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden h-8 w-8"
+            onClick={() => setMobileMenuOpen?.(!mobileMenuOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
+          <div className="text-base md:text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
             Deskoros
           </div>
-          <span className="text-sm text-muted-foreground">Teacher Dashboard</span>
+          <span className="hidden sm:block text-xs md:text-sm text-muted-foreground">Teacher Dashboard</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10">
-            <Bell className="h-5 w-5" />
+        <div className="flex items-center space-x-1 md:space-x-2">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 h-8 w-8 md:h-10 md:w-10">
+            <Bell className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-full hover:bg-primary/10"
+            className="rounded-full hover:bg-primary/10 h-8 w-8 md:h-10 md:w-10"
           >
-            {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
+              <Button variant="ghost" className="relative h-8 w-8 md:h-10 md:w-10 rounded-full">
+                <Avatar className="h-8 w-8 md:h-10 md:w-10">
                   <AvatarImage src={profile.avatar} alt={profile.name} />
                   <AvatarFallback className="bg-primary/20 text-primary">
-                    <User className="h-5 w-5" />
+                    <User className="h-4 w-4 md:h-5 md:w-5" />
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -515,9 +538,11 @@ function TeacherTopNavigation() {
   );
 }
 
-export function TopNavigation({ role: propRole }: TopNavigationProps) {
+export function TopNavigation({ role: propRole, mobileMenuOpen, setMobileMenuOpen }: TopNavigationProps) {
   const location = useLocation();
   const role = propRole || (location.pathname.startsWith("/student") ? "student" : "teacher");
 
-  return role === "student" ? <StudentTopNavigation /> : <TeacherTopNavigation />;
+  return role === "student" ? 
+    <StudentTopNavigation mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} /> : 
+    <TeacherTopNavigation mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />;
 }

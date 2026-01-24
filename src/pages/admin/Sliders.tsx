@@ -45,25 +45,22 @@ const Sliders: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Slider Management</h1>
-          <p className="text-gray-600 mt-1">Manage homepage sliders and banners</p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          <Plus size={20} />
-          Add Slider
-        </button>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="Slider Management"
+        description="Manage homepage sliders and banners"
+        action={
+          <AdminButton onClick={() => setShowModal(true)}>
+            <Plus size={18} />
+            Add Slider
+          </AdminButton>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {loading ? (
-          <div className="col-span-full flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="col-span-full">
+            <AdminLoading />
           </div>
         ) : (
           sliders.map((slider) => (
@@ -118,7 +115,7 @@ const Sliders: React.FC = () => {
           ))
         )}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

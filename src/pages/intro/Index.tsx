@@ -34,7 +34,7 @@ const Index = () => {
       <Navbar />
 
       {/* Main content with padding to account for fixed nav */}
-      <div className="pt-24 min-h-[calc(100vh-6rem)]">
+      <div className="pt-16 md:pt-24 min-h-[calc(100vh-4rem)] md:min-h-[calc(100vh-6rem)]">
         {/* Enhanced Hero Section with 3D Elements */}
         <div className="relative overflow-hidden min-h-screen flex items-center">
           {/* 3D Floating Elements */}
@@ -91,19 +91,19 @@ const Index = () => {
           </div>
 
           {/* Hero Content with Enhanced 3D Design */}
-          <div className="container mx-auto px-6 py-20 relative z-10">
-            <div className="text-center max-w-5xl mx-auto">
+          <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-16 md:py-20 relative z-10">
+            <div className="text-center max-w-5xl mx-auto px-2">
               <div className="mb-8 space-y-4">
-                <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200 px-6 py-2 text-lg font-semibold animate-bounce shadow-lg">
+                <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200 px-3 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-lg font-semibold animate-bounce shadow-lg">
                   ✨ Where Teachers & Students Unite for Excellence
                 </Badge>
                 
-                <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border-blue-200 px-4 py-2 animate-pulse shadow-md">
+                <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 border-blue-200 px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base animate-pulse shadow-md">
                   Powered by <span className="font-bold">👥 AI-Enhanced Collaborative Learning</span>
                 </Badge>
               </div>
               
-              <h1 className="text-6xl md:text-8xl font-black text-gray-900 mb-8 leading-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-black text-gray-900 mb-6 sm:mb-8 leading-tight">
                 <span className="block animate-fade-in-up">Master Learning with</span>
                 <span className="relative block text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 animate-fade-in-up delay-300">
                   Expert Supervision
@@ -112,7 +112,7 @@ const Index = () => {
                 </span>
               </h1>
               
-              <p className="text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-500">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-6 sm:mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-500">
                 Experience personalized education through expert teacher supervision, collaborative learning environments, and comprehensive exam preparation with real-time progress tracking.
               </p>
               
@@ -121,7 +121,7 @@ const Index = () => {
 
                 <Button 
                   size="lg" 
-                  className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 hover:from-purple-700 hover:via-pink-600 hover:to-blue-700 text-white px-10 py-6 text-xl rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 group"
+                  className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 hover:from-purple-700 hover:via-pink-600 hover:to-blue-700 text-white px-6 sm:px-10 py-3 sm:py-6 text-base sm:text-xl rounded-xl sm:rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 group"
                 >
                   <Play className="mr-3 w-6 h-6 group-hover:scale-110 transition-transform" />
                   Begin
@@ -131,7 +131,7 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="border-2 border-purple-300 text-purple-700 hover:bg-purple-50 px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="border-2 border-purple-300 text-purple-700 hover:bg-purple-50 px-5 sm:px-8 py-3 sm:py-6 text-sm sm:text-lg rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
                   Watch Demo
                 </Button>
@@ -141,22 +141,22 @@ const Index = () => {
         </div>
 
         {/* Enhanced User Type Sections with Side-by-Side Layout */}
-        <div className="py-32 bg-gradient-to-b from-white to-purple-50 relative">
+        <div className="py-12 sm:py-20 md:py-32 bg-gradient-to-b from-white to-purple-50 relative">
           <div className="container mx-auto px-6">
             <div className="text-center mb-20">
-              <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Choose Your Learning Role
               </h2>
-              <p className="text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
                 Join thousands of educators and learners who trust EduYatra for their supervised learning journey
               </p>
             </div>
             
-            <div className="space-y-32">
+            <div className="space-y-12 sm:space-y-20 md:space-y-32">
               {/* Students Section - Image Left, Content Right */}
               <div className="flex flex-col lg:flex-row items-center gap-16">
                 <div className="lg:w-1/2">
-                  <div className="relative w-full h-96 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-500 overflow-hidden">
+                  <div className="relative w-full h-64 sm:h-80 md:h-96 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-2xl sm:rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-500 overflow-hidden">
                     <div className="absolute inset-4 bg-gradient-to-br from-white/20 to-white/5 rounded-2xl backdrop-blur-sm"></div>
                     <div className="absolute top-8 left-8 w-20 h-20 bg-white/30 rounded-2xl flex items-center justify-center">
                       <User className="w-12 h-12 text-white" />
@@ -175,7 +175,7 @@ const Index = () => {
                 <div className="lg:w-1/2 space-y-8">
                   <div>
                     <Badge className="bg-blue-100 text-blue-700 px-4 py-2 mb-4">For Students</Badge>
-                    <h3 className="text-4xl font-bold mb-6 text-gray-900">Learn with Expert Guidance</h3>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-gray-900">Learn with Expert Guidance</h3>
                     <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                       Learn under expert teacher supervision, participate in collaborative study sessions, and track your progress with detailed analytics and exam preparation tools.
                     </p>
@@ -196,7 +196,7 @@ const Index = () => {
                   </div>
                   
                   <Link to="/auth/student">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group">
                       Start Learning Journey
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Button>

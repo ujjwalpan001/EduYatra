@@ -65,36 +65,40 @@ const Exams: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Exam Management</h1>
-          <p className="text-gray-600 mt-1">Manage all exams and tests across the platform</p>
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Exam Management
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Manage all exams and tests across the platform
+          </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-          <Plus size={20} />
-          Create Exam
+        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-white rounded-lg hover:opacity-90 transition-opacity shadow-md">
+          <Plus size={18} />
+          <span className="text-sm sm:text-base">Create Exam</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="glass-effect rounded-xl border border-primary/10 p-3 sm:p-4 animate-slide-in">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <input
               type="text"
               placeholder="Search exams by title..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 text-sm bg-background border border-primary/20 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 text-sm bg-background border border-primary/20 rounded-lg focus:ring-2 focus:ring-primary/50 transition-all"
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
@@ -107,42 +111,46 @@ const Exams: React.FC = () => {
       </div>
 
       {/* Exams Grid */}
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-3 sm:space-y-4">
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : exams.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-500">No exams found</p>
+          <div className="glass-effect rounded-xl border border-primary/10 p-12 text-center">
+            <p className="text-muted-foreground">No exams found</p>
           </div>
         ) : (
-          exams.map((exam) => (
-            <div key={exam._id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+          exams.map((exam, index) => (
+            <div
+              key={exam._id}
+              className="glass-effect rounded-xl border border-primary/10 p-4 sm:p-6 hover:border-primary/30 hover:shadow-md transition-all animate-slide-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="flex-1 w-full">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-3">
+                    <h3 className="text-base sm:text-lg font-semibold text-foreground">
                       {exam.title || exam.question_set_id?.title || 'Untitled Exam'}
                     </h3>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusColor(exam.status)}`}>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(exam.status)}`}>
                       {exam.status || 'draft'}
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar size={16} className="text-gray-400" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground p-2 rounded-lg bg-muted/30">
+                      <Calendar size={14} className="text-muted-foreground" />
                       <span>
                         {exam.start_time ? new Date(exam.start_time).toLocaleDateString() : 'Not scheduled'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock size={16} className="text-gray-400" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground p-2 rounded-lg bg-muted/30">
+                      <Clock size={14} className="text-muted-foreground" />
                       <span>{exam.duration || 'N/A'} minutes</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users size={16} className="text-gray-400" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground p-2 rounded-lg bg-muted/30">
+                      <Users size={14} className="text-muted-foreground" />
                       <span>{exam.submissionCount || 0} submissions</span>
                     </div>
                   </div>

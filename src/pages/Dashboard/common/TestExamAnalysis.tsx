@@ -261,22 +261,22 @@ const TestExamAnalysis = () => {
 
   return (
     <Layout>
-      <div className="p-6 space-y-8">
-        <div className="flex items-center justify-between animate-fade-in">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+      <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8">
+        <div className="space-y-3 sm:space-y-0 sm:flex sm:items-start sm:justify-between animate-fade-in">
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               Test/Exam Analysis
             </h1>
-            <p className="text-muted-foreground mt-2">Detailed analysis of test and exam performance</p>
+            <p className="text-sm sm:text-base text-muted-foreground">Detailed analysis of test and exam performance</p>
           </div>
-          <Button className="bg-gradient-to-r from-primary to-primary/80">
+          <Button className="bg-gradient-to-r from-primary to-primary/80 w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Export Analysis
           </Button>
         </div>
 
         {/* Summary Stats */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4">
           {[
             { title: "Total Tests", value: summary.totalTests.toString(), icon: BarChart3, subtitle: "exams created", onClick: null },
             { title: "Average Score", value: `${summary.avgScore.toFixed(1)}%`, icon: TrendingUp, subtitle: "across all tests", onClick: null },
@@ -289,13 +289,13 @@ const TestExamAnalysis = () => {
               style={{ animationDelay: `${index * 100}ms` }}
               onClick={stat.onClick || undefined}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+                <CardTitle className="text-xs sm:text-sm font-medium">{stat.title}</CardTitle>
+                <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
               </CardContent>
             </Card>
           ))}
@@ -312,79 +312,80 @@ const TestExamAnalysis = () => {
                 <p className="text-muted-foreground">No exams found. Create your first exam to see analysis here.</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {exams.map((exam, index) => (
-                  <div key={exam.exam_id} className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/20 transition-colors animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="flex-1">
-                          <p className="font-medium">{exam.exam_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDate(exam.date)} • {exam.course}
-                          </p>
-                          <Button
-                            variant="link"
+                  <div key={exam.exam_id} className="flex flex-col gap-3 p-3 sm:p-4 border rounded-lg hover:bg-accent/20 transition-colors animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium break-words">{exam.exam_name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {formatDate(exam.date)} • {exam.course}
+                        </p>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-xs text-primary hover:underline"
+                          onClick={() => handleViewParticipants(exam)}
+                        >
+                          <Users className="h-3 w-3 mr-1" />
+                          {exam.participants} participants
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                        <div className="flex-1 sm:flex-initial">
+                          <p className="font-bold text-primary text-sm sm:text-base">{exam.avgScore.toFixed(1)}%</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">Average Score</p>
+                        </div>
+                        <div className="flex-1 sm:flex-initial">
+                          <p className="font-medium text-sm sm:text-base">{exam.avgTimeSpent} min</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">Avg Time</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getStatusColor(exam.status) as "default" | "secondary" | "outline"} className="whitespace-nowrap">
+                            {exam.status}
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
                             size="sm"
-                            className="p-0 h-auto text-xs text-primary hover:underline"
                             onClick={() => handleViewParticipants(exam)}
+                            title="View participants"
+                            className="h-8 w-8 p-0"
                           >
-                            <Users className="h-3 w-3 mr-1" />
-                            {exam.participants} participants
+                            <Eye className="h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-bold text-primary">{exam.avgScore.toFixed(1)}%</p>
-                          <p className="text-xs text-muted-foreground">Average Score</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{exam.avgTimeSpent} min</p>
-                          <p className="text-xs text-muted-foreground">Avg Time</p>
-                        </div>
-                        <Badge variant={getStatusColor(exam.status) as "default" | "secondary" | "outline"}>
-                          {exam.status}
-                        </Badge>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewParticipants(exam)}
-                          title="View participants"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     
                     {/* Release Controls */}
-                    <div className="flex items-center gap-6 pl-2 pt-2 border-t">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          {exam.score_released ? <Unlock className="h-4 w-4 text-green-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-                          <span className="text-sm font-medium">Release Score</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 pl-0 sm:pl-2 pt-3 border-t">
+                      <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 flex-1">
+                          {exam.score_released ? <Unlock className="h-4 w-4 text-green-600 flex-shrink-0" /> : <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                          <span className="text-xs sm:text-sm font-medium">Release Score</span>
                         </div>
                         <Switch
                           checked={exam.score_released}
                           onCheckedChange={() => handleToggleScoreRelease(exam.exam_id, exam.score_released)}
                         />
-                        <span className="text-xs text-muted-foreground">
-                          {exam.score_released ? 'Scores visible to students' : 'Scores hidden from students'}
-                        </span>
                       </div>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
+                        {exam.score_released ? 'Scores visible to students' : 'Scores hidden from students'}
+                      </span>
                       
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          {exam.answers_released ? <Unlock className="h-4 w-4 text-green-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-                          <span className="text-sm font-medium">Release Answers</span>
+                      <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 flex-1">
+                          {exam.answers_released ? <Unlock className="h-4 w-4 text-green-600 flex-shrink-0" /> : <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                          <span className="text-xs sm:text-sm font-medium">Release Answers</span>
                         </div>
                         <Switch
                           checked={exam.answers_released}
                           onCheckedChange={() => handleToggleAnswerRelease(exam.exam_id, exam.answers_released)}
                         />
-                        <span className="text-xs text-muted-foreground">
-                          {exam.answers_released ? 'Answers visible to students' : 'Answers hidden from students'}
-                        </span>
                       </div>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
+                        {exam.answers_released ? 'Answers visible to students' : 'Answers hidden from students'}
+                      </span>
                     </div>
                   </div>
                 ))}

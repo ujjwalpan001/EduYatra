@@ -41,22 +41,21 @@ const Settings: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
+      <AdminPageLayout>
+        <AdminLoading />
+      </AdminPageLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
-        <p className="text-gray-600 mt-1">Configure platform settings and preferences</p>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="System Settings"
+        description="Configure platform settings and preferences"
+      />
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow">
+      <AdminCard>
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
             <button
@@ -425,8 +424,8 @@ const Settings: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </AdminCard>
+    </AdminPageLayout>
   );
 };
 

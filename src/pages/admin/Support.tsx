@@ -82,39 +82,29 @@ const Support: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
-        <p className="text-gray-600 mt-1">Manage and respond to user support requests</p>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="Support Tickets"
+        description="Manage and respond to user support requests"
+      />
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search tickets..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="in-progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
+      <AdminFilterSection>
+        <div className="flex-1">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search tickets..."
+          />
+        </div>
+        <AdminSelect
+          options={[
+            { value: 'all', label: 'All Status' },
+            { value: 'open', label: 'Open' },
+            { value: 'in-progress', label: 'In Progress' },
+            { value: 'resolved', label: 'Resolved' },
+            { value: 'closed', label: 'Closed' },
+          ]}
+        />
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
@@ -126,8 +116,7 @@ const Support: React.FC = () => {
             <option value="high">High</option>
             <option value="urgent">Urgent</option>
           </select>
-        </div>
-      </div>
+        </AdminFilterSection>
 
       {/* Tickets Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -249,8 +238,12 @@ const Support: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 
 export default Support;
+
+
+
+

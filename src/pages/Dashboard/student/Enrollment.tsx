@@ -403,43 +403,43 @@ const Enrollment: React.FC = () => {
                       {attendedTests.map((result, index) => (
                         <div key={result._id || result.test}>
                           <Card className="border border-gray-200 transition-all duration-200 hover:shadow-lg animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
-                            <CardContent className="p-6">
-                              <div className="flex justify-between items-start">
-                                <div className="space-y-2">
+                            <CardContent className="p-4 sm:p-6">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                                <div className="space-y-2 flex-1">
                                   <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-5 w-5 text-green-500" />
-                                    <h3 className="font-medium text-gray-800">{result.test}</h3>
+                                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                                    <h3 className="font-medium text-gray-800 break-words">{result.test}</h3>
                                   </div>
                                   <p className="text-sm text-gray-500">by {result.instructor}</p>
-                                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                                     <span>{result.date}</span>
                                     <span>•</span>
                                     <span>{result.totalQuestions} questions</span>
                                     <span>•</span>
-                                    <span>Completed in {result.timeSpent}</span>
+                                    <span className="break-words">Completed in {result.timeSpent}</span>
                                   </div>
                                 </div>
-                                <div className="text-right space-y-2">
+                                <div className="flex flex-col sm:text-right space-y-3">
                                   {result.scoreReleased === true ? (
                                     <>
                                       <div className="text-2xl font-bold text-blue-500">{result.score}%</div>
-                                      <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'}>
+                                      <Badge variant={result.score >= 90 ? 'default' : 'secondary'} className={`${result.score >= 90 ? 'bg-blue-500' : 'bg-gray-500'} w-fit`}>
                                         Grade: {result.grade}
                                       </Badge>
                                     </>
                                   ) : (
                                     <div className="flex items-center gap-2 text-amber-600">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                                       </svg>
                                       <span className="text-sm font-semibold">Score Pending</span>
                                     </div>
                                   )}
-                                  <div className="flex gap-2">
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
-                                      className="border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+                                      className="border-blue-500 text-blue-500 hover:bg-blue-50 font-semibold py-2 px-3 rounded-lg shadow-md transition-all duration-300 whitespace-nowrap"
                                       onClick={() => toggleAttendedDetails(result._id || result.test)}
                                     >
                                       <Info className="h-4 w-4 mr-1" />
@@ -448,7 +448,7 @@ const Enrollment: React.FC = () => {
                                     <Button 
                                       variant="default" 
                                       size="sm" 
-                                      className={`${result.answersReleased === true ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'} text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-300`}
+                                      className={`${result.answersReleased === true ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'} text-white font-semibold py-2 px-3 rounded-lg shadow-md transition-all duration-300 whitespace-nowrap`}
                                       onClick={() => result.answersReleased === true && navigate(`/student/test-answers/${result._id}`)}
                                       disabled={result.answersReleased !== true}
                                     >
@@ -502,29 +502,29 @@ const Enrollment: React.FC = () => {
                         <CardTitle className="text-gray-800">Attendance Summary</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="grid gap-4 md:grid-cols-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-500">{attendedTests.length}</div>
-                            <p className="text-sm text-gray-500">Total Tests</p>
+                        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+                          <div className="text-center p-3 bg-gradient-to-br from-background to-accent/10 rounded-lg">
+                            <div className="text-xl sm:text-2xl font-bold text-blue-500">{attendedTests.length}</div>
+                            <p className="text-xs sm:text-sm text-gray-500">Total Tests</p>
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-green-500">
+                          <div className="text-center p-3 bg-gradient-to-br from-background to-accent/10 rounded-lg">
+                            <div className="text-xl sm:text-2xl font-bold text-green-500">
                               {attendedTests.length > 0 && attendedTests.filter(t => t.scoreReleased === true).length > 0
                                 ? (attendedTests.filter(t => t.scoreReleased === true).reduce((sum, t) => sum + t.score, 0) / attendedTests.filter(t => t.scoreReleased === true).length).toFixed(1)
                                 : '—'}%
                             </div>
-                            <p className="text-sm text-gray-500">Average Score</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Average Score</p>
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-500">
+                          <div className="text-center p-3 bg-gradient-to-br from-background to-accent/10 rounded-lg">
+                            <div className="text-xl sm:text-2xl font-bold text-blue-500">
                               {attendedTests.length > 0 && attendedTests.filter(t => t.scoreReleased === true).length > 0
                                 ? Math.max(...attendedTests.filter(t => t.scoreReleased === true).map(t => t.score))
                                 : '—'}%
                             </div>
-                            <p className="text-sm text-gray-500">Best Score</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Best Score</p>
                           </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-500">
+                          <div className="text-center p-3 bg-gradient-to-br from-background to-accent/10 rounded-lg">
+                            <div className="text-xl sm:text-2xl font-bold text-gray-500">
                               {attendedTests.length > 0 
                                 ? attendedTests.reduce((sum, t) => {
                                     const time = t.timeSpent.match(/(\d+)/g);
@@ -536,7 +536,7 @@ const Enrollment: React.FC = () => {
                                   }, 0)
                                 : 0} min
                             </div>
-                            <p className="text-sm text-gray-500">Total Time</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Total Time</p>
                           </div>
                         </div>
                       </CardContent>

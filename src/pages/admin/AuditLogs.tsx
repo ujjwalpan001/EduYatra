@@ -69,44 +69,35 @@ const AuditLogs: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-gray-600 mt-1">Track all system activities and changes</p>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="Audit Logs"
+        description="Track all system activities and changes"
+      />
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search logs by user, action, or entity..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="all">All Actions</option>
-            <option value="create">Create</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-            <option value="suspend">Suspend</option>
-            <option value="activate">Activate</option>
-          </select>
+      <AdminFilterSection>
+        <div className="flex-1">
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search logs by user, action, or entity..."
+          />
         </div>
-      </div>
+        <AdminSelect
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
+          options={[
+            { value: 'all', label: 'All Actions' },
+            { value: 'create', label: 'Create' },
+            { value: 'update', label: 'Update' },
+            { value: 'delete', label: 'Delete' },
+            { value: 'login', label: 'Login' },
+            { value: 'logout', label: 'Logout' },
+            { value: 'suspend', label: 'Suspend' },
+            { value: 'activate', label: 'Activate' },
+          ]}
+        />
+      </AdminFilterSection>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -278,7 +269,7 @@ const AuditLogs: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

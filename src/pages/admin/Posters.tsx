@@ -45,23 +45,21 @@ const Posters: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Posters & Announcements</h1>
-          <p className="text-gray-600 mt-1">Manage important announcements and notices</p>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-          <Plus size={20} />
-          Create Poster
-        </button>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="Posters & Announcements"
+        description="Manage important announcements and notices"
+        action={
+          <AdminButton>
+            <Plus size={18} />
+            Create Poster
+          </AdminButton>
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-3 sm:space-y-4">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          </div>
+          <AdminLoading />
         ) : (
           posters.map((poster) => (
             <div key={poster._id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
@@ -111,7 +109,7 @@ const Posters: React.FC = () => {
           ))
         )}
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

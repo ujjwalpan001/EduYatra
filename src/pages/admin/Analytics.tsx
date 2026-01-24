@@ -25,31 +25,27 @@ const Analytics: React.FC = () => {
   }, [period]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <AdminLoading />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
-          <p className="text-gray-600 mt-1">Comprehensive platform analytics and insights</p>
-        </div>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="7">Last 7 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
-          <option value="365">Last year</option>
-        </select>
-      </div>
+    <AdminPageLayout>
+      <AdminPageHeader
+        title="Analytics & Reports"
+        description="Comprehensive platform analytics and insights"
+        action={
+          <AdminSelect
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            options={[
+              { value: '7', label: 'Last 7 days' },
+              { value: '30', label: 'Last 30 days' },
+              { value: '90', label: 'Last 90 days' },
+              { value: '365', label: 'Last year' },
+            ]}
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
@@ -120,7 +116,7 @@ const Analytics: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AdminPageLayout>
   );
 };
 

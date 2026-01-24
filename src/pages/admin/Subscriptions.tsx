@@ -1,6 +1,14 @@
 // frontend/src/pages/admin/Subscriptions.tsx
 import React, { useState } from 'react';
-import { Search, CreditCard, TrendingUp, Users, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, TrendingUp, Users, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import {
+  AdminPageLayout,
+  AdminPageHeader,
+  AdminFilterSection,
+  AdminSearchInput,
+  AdminCard,
+  AdminBadge,
+} from '../../components/admin';
 
 const Subscriptions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'plans' | 'transactions'>('overview');

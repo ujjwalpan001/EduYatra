@@ -116,16 +116,26 @@ const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-indigo-900 text-white transition-all duration-300 flex flex-col`}
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } ${
+          sidebarOpen ? 'w-64' : 'lg:w-20 w-64'
+        } bg-indigo-900 text-white transition-all duration-300 flex flex-col fixed lg:relative h-full z-50`}
       >
         {/* Header */}
-        <div className="p-4 flex items-center justify-between border-b border-indigo-800">
-          {sidebarOpen && <h1 className="text-xl font-bold">EduYatra Admin</h1>}
+        <div className="p-3 sm:p-4 flex items-center justify-between border-b border-indigo-800">
+          {sidebarOpen && <h1 className="text-lg sm:text-xl font-bold truncate">EduYatra Admin</h1>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded hover:bg-indigo-800"
@@ -203,11 +213,19 @@ const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
         {/* Top Bar */}
-        <header className="bg-white shadow-sm p-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-800">
+        <header className="bg-white shadow-sm p-3 sm:p-4 flex items-center justify-between">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 rounded hover:bg-gray-100 mr-2"
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="flex-1">
+            <h2 className="text-base sm:text-xl md:text-2xl font-semibold text-gray-800 truncate">
               {location.pathname.split('/').pop()?.replace('-', ' ').toUpperCase() || 'DASHBOARD'}
             </h2>
             {isSuperAdmin && (
@@ -217,25 +235,25 @@ const AdminLayout: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button className="relative p-2 rounded-full hover:bg-gray-100">
-              <MessageSquare size={20} />
+              <MessageSquare size={18} className="sm:w-5 sm:h-5" />
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
                 {userProfile.name?.[0]?.toUpperCase() || 'A'}
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-semibold">{userProfile.name || 'Admin User'}</p>
-                <p className="text-xs text-gray-500">{userProfile.email || 'admin@eduyatra.com'}</p>
+                <p className="text-sm font-semibold truncate max-w-[150px]">{userProfile.name || 'Admin User'}</p>
+                <p className="text-xs text-gray-500 truncate max-w-[150px]">{userProfile.email || 'admin@eduyatra.com'}</p>
               </div>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-gray-50">
           <Outlet />
         </main>
       </div>

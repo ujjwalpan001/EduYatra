@@ -31,14 +31,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 interface AppSidebarProps {
   role?: "student" | "teacher"; // Make role optional to allow URL-based determination
+  inSheet?: boolean; // Whether the sidebar is inside a Sheet component
 }
 
-export function AppSidebar({ role: propRole }: AppSidebarProps) {
+export function AppSidebar({ role: propRole, inSheet = false }: AppSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const isCollapsed = state === "collapsed";
   const [isHovered, setIsHovered] = useState(false);
-  const showExpanded = !isCollapsed || isHovered;
+  const showExpanded = inSheet ? true : (!isCollapsed || isHovered); // Always expanded in Sheet
 
   // Determine role based on URL if propRole is not provided
   const role = propRole || (location.pathname.startsWith("/student") ? "student" : "teacher");
@@ -112,15 +113,15 @@ export function AppSidebar({ role: propRole }: AppSidebarProps) {
 
   return (
     <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="relative h-full"
+      onMouseEnter={() => !inSheet && setIsHovered(true)}
+      onMouseLeave={() => !inSheet && setIsHovered(false)}
     >
       <Sidebar
         collapsible="icon"
         className={`transition-all duration-300 ease-in-out border-r-2 border-primary/10 ${
-          isCollapsed && !isHovered ? "w-16" : "w-64"
-        } fixed left-0 left top-0 top h-full z-40`}
+          inSheet ? "w-full h-full" : isCollapsed && !isHovered ? "w-16" : "w-64"
+        } ${!inSheet ? "md:fixed left-0 top-0 h-full z-40" : ""}`}
       >
         <SidebarHeader className="border-b border-primary/10 p-4">
           <Link 
