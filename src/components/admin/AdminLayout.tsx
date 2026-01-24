@@ -47,6 +47,8 @@ const AdminLayout: React.FC = () => {
   const hasPermission = (permission: string) => {
     // Super admin has all permissions
     if (isSuperAdmin) return true;
+    // If no permissions are set (empty array), hide all menu items
+    if (!userPermissions || userPermissions.length === 0) return false;
     // Check if permission exists in user's permissions array
     return userPermissions.includes(permission);
   };

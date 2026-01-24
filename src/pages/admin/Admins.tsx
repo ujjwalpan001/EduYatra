@@ -1,6 +1,7 @@
 // frontend/src/pages/admin/Admins.tsx
 import React, { useEffect, useState } from 'react';
 import { Search, Plus, Edit, Trash2, Lock, Unlock, Shield, Key, Copy, CheckCircle, Settings, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { 
   listAllAdmins, 
   deleteUser, 
@@ -11,7 +12,8 @@ import {
   createAdminCode,
   deleteAdminCode,
   toggleAdminCodeStatus,
-  updateAdminPermissions 
+  updateAdminPermissions,
+  createSuperAdmin 
 } from '../../lib/api/admin';
 
 const Admins: React.FC = () => {
@@ -41,8 +43,10 @@ const Admins: React.FC = () => {
   });
   const [codeFormData, setCodeFormData] = useState({
     code: '',
-    description: '',
-    expires_at: '',
+    institute: '',
+    isSuperAdminCode: false,
+    maxUses: '1',
+    expiresAt: '',
   });
 
   const fetchAdmins = async () => {
@@ -129,17 +133,31 @@ const Admins: React.FC = () => {
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createAdminCode(codeFormData);
+      // Format data - send null/undefined for empty optional fields
+      const data = {
+        code: codeFormData.code,
+        institute: codeFormData.institute,
+        isSuperAdminCode: codeFormData.isSuperAdminCode,
+        maxUses: codeFormData.maxUses ? parseInt(codeFormData.maxUses) : null,
+        expiresAt: codeFormData.expiresAt || null,
+      };
+      const response = await createAdminCode(data);
+      
+      // Success
       setShowCodeModal(false);
       setCodeFormData({
         code: '',
-        description: '',
-        expires_at: '',
+        institute: '',
+        isSuperAdminCode: false,
+        maxUses: '1',
+        expiresAt: '',
       });
-      fetchAdminCodes();
+      await fetchAdminCodes();
+      toast.success(`${codeFormData.isSuperAdminCode ? 'Super admin' : 'Admin'} code created successfully`);
     } catch (error: any) {
       console.error('Error creating admin code:', error);
-      alert(error.response?.data?.error || 'Failed to create admin code.');
+      const errorMsg = error.response?.data?.error || error.message || 'Failed to create admin code';
+      toast.error(errorMsg);
     }
   };
 
@@ -242,13 +260,15 @@ const Admins: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Admin Management</h1>
           <p className="text-gray-600 mt-1">Manage administrator accounts and permissions</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          <Plus size={20} />
-          Add Admin
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            <Plus size={20} />
+            Add Admin
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -499,7 +519,7 @@ const Admins: React.FC = () => {
                 <Key className="text-indigo-600" size={24} />
                 Admin Signup Codes
               </h2>
-              <p className="text-gray-600 mt-1">Generate codes for new admin signups (Super Admin Code: 9804)</p>
+              <p className="text-gray-600 mt-1">Generate signup codes for new admins and super admins</p>
             </div>
             <button
               onClick={() => setShowCodeModal(true)}
@@ -625,8 +645,11 @@ const Admins: React.FC = () => {
       {/* Create Admin Code Modal - Only visible to Super Admin */}
       {isSuperAdmin && showCodeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Generate Admin Code</h3>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Key className="text-indigo-600" size={24} />
+              Generate Admin Code
+            </h3>
             <form onSubmit={handleCodeSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Admin Code *</label>
@@ -650,23 +673,56 @@ const Admins: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-                <textarea
-                  value={codeFormData.description}
-                  onChange={(e) => setCodeFormData({ ...codeFormData, description: e.target.value })}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Institute *</label>
+                <input
+                  type="text"
+                  value={codeFormData.institute}
+                  onChange={(e) => setCodeFormData({ ...codeFormData, institute: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  rows={2}
-                  placeholder="e.g., Code for John Doe"
+                  placeholder="e.g., SRM, IIT, Harvard"
+                  required
+                />
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={codeFormData.isSuperAdminCode}
+                    onChange={(e) => setCodeFormData({ ...codeFormData, isSuperAdminCode: e.target.checked })}
+                    className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-purple-900 flex items-center gap-2">
+                      <Shield size={16} />
+                      Create Super Admin Code
+                    </div>
+                    <div className="text-sm text-purple-700 mt-1">
+                      This code will create a super admin with full system access
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Uses *</label>
+                <input
+                  type="number"
+                  value={codeFormData.maxUses}
+                  onChange={(e) => setCodeFormData({ ...codeFormData, maxUses: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Default: 1"
+                  min="1"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date *</label>
                 <input
                   type="date"
-                  value={codeFormData.expires_at}
-                  onChange={(e) => setCodeFormData({ ...codeFormData, expires_at: e.target.value })}
+                  value={codeFormData.expiresAt}
+                  onChange={(e) => setCodeFormData({ ...codeFormData, expiresAt: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   min={new Date().toISOString().split('T')[0]}
+                  required
                 />
               </div>
               <div className="flex gap-3 mt-6">
@@ -674,7 +730,7 @@ const Admins: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setShowCodeModal(false);
-                    setCodeFormData({ code: '', description: '', expires_at: '' });
+                    setCodeFormData({ code: '', institute: '', isSuperAdminCode: false, maxUses: '1', expiresAt: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
@@ -682,9 +738,13 @@ const Admins: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className={`flex-1 px-4 py-2 text-white rounded-lg ${
+                    codeFormData.isSuperAdminCode
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
                 >
-                  Generate Code
+                  {codeFormData.isSuperAdminCode ? 'Generate Super Admin Code' : 'Generate Admin Code'}
                 </button>
               </div>
             </form>

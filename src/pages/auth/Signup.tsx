@@ -87,7 +87,6 @@ const SignUp = () => {
           { _id: '3', name: 'SRM KTR', location: 'Kattankulathur, TN' },
           { _id: '4', name: 'KLU', location: 'Vaddeswaram, AP' }
         ]);
-        toast.warning('Using default institutes. Admin can add more later.');
       } finally {
         setInstitutesLoading(false);
       }
@@ -161,13 +160,13 @@ const SignUp = () => {
 
     try {
       const response = await axios.post<SignupResponse>(`${API_URL}/users/signup`, formData);
-      const { token, role, isSuperAdmin } = response.data;
+      const { token, role, isSuperAdmin, permissions } = response.data;
 
       const decoded: any = jwtDecode(token);
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
-      localStorage.setItem("permissions", JSON.stringify(decoded.permissions || []));
+      localStorage.setItem("permissions", JSON.stringify(permissions || decoded.permissions || []));
       const userProfile: Profile = {
         name: decoded.fullName || formData.fullName,
         email: decoded.email || formData.email,
@@ -210,6 +209,7 @@ const SignUp = () => {
             window.location.href = "/student";
             break;
           case "admin":
+          case "superadmin":
             window.location.href = "/admin";
             break;
           default:

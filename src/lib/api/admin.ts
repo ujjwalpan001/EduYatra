@@ -184,11 +184,6 @@ export const listAllAdmins = async (params: any) => {
   return response.data;
 };
 
-export const updateAdminPermissions = async (adminId: string, permissions: string[]) => {
-  const response = await api.put(`/admin/admins/${adminId}/permissions`, { permissions });
-  return response.data;
-};
-
 // ==================== EXAM MANAGEMENT ====================
 export const listAllExams = async (params: any) => {
   const response = await api.get('/admin/exams', { params });
@@ -275,5 +270,21 @@ export const updateInstitute = async (instituteId: string, data: any) => {
 
 export const deleteInstitute = async (instituteId: string) => {
   const response = await api.delete(`/admin/institutes/${instituteId}`);
+  return response.data;
+};
+
+// ==================== PERMISSION MANAGEMENT ====================
+export const updateAdminPermissions = async (adminId: string, permissions: string[]) => {
+  const response = await api.put(`/admin/admins/${adminId}/permissions`, { permissions });
+  return response.data;
+};
+
+export const getAdminPermissions = async (adminId: string) => {
+  const response = await api.get(`/admin/admins/${adminId}/permissions`);
+  return response.data;
+};
+
+export const createSuperAdmin = async (data: any) => {
+  const response = await api.post('/admin/create-superadmin', data);
   return response.data;
 };
