@@ -125,15 +125,17 @@ export function AppSidebar({ role: propRole }: AppSidebarProps) {
         <SidebarHeader className="border-b border-primary/10 p-4">
           <Link 
             to={role === "student" ? "/student" : "/teacher"} 
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-white" />
-            </div>
+            <img 
+              src="/logo.svg" 
+              alt="Deskoros Logo" 
+              className="h-9 w-9 object-contain"
+            />
             {showExpanded && (
               <div className="animate-fade-in">
                 <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  EduYatra
+                  Deskoros
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {role === "student" ? "Student Portal" : "Learning Platform"}

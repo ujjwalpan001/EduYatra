@@ -58,7 +58,7 @@ const SignIn = () => {
       localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
       localStorage.setItem("permissions", JSON.stringify(decoded.permissions || []));
       const userProfile: Profile = {
-        name: decoded.username || decoded.fullName || "Unknown User",
+        name: decoded.fullName || "Unknown User",
         email: decoded.email || formData.email,
         bio: "",
         avatar: "/placeholder.svg",
