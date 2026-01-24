@@ -357,7 +357,7 @@ function StudentTopNavigation() {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center space-x-4">
           <div className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            EduYatra
+            Deskoros
           </div>
           <span className="text-sm text-muted-foreground">Student Portal</span>
         </div>
@@ -456,7 +456,7 @@ function TeacherTopNavigation() {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center space-x-4">
           <div className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            EduYatra
+            Deskoros
           </div>
           <span className="text-sm text-muted-foreground">Teacher Dashboard</span>
         </div>
