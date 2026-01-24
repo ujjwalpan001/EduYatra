@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,13 @@ interface Profile {
 interface SignupResponse {
   token: string;
   role: string;
+  isSuperAdmin?: boolean;
+}
+
+interface Institute {
+  _id: string;
+  name: string;
+  location?: string;
 }
 
 const SignUp = () => {
@@ -38,7 +45,10 @@ const SignUp = () => {
     school: "",
     adminCode: "",
     institution: "",
+    institute: "",
   });
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [institutesLoading, setInstitutesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -49,6 +59,41 @@ const SignUp = () => {
     number: false,
     special: false,
   });
+
+  // Fetch institutes on component mount
+  useEffect(() => {
+    const fetchInstitutes = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/users/institutes`);
+        if (response.data.success && response.data.institutes.length > 0) {
+          setInstitutes(response.data.institutes);
+        } else {
+          // Fallback to default institutes if none found
+          console.warn('No institutes found in database, using defaults');
+          setInstitutes([
+            { _id: '1', name: 'SRMAP', location: 'Mangalagiri, AP' },
+            { _id: '2', name: 'VIT AP', location: 'Amaravati, AP' },
+            { _id: '3', name: 'SRM KTR', location: 'Kattankulathur, TN' },
+            { _id: '4', name: 'KLU', location: 'Vaddeswaram, AP' }
+          ]);
+        }
+      } catch (error: any) {
+        console.error('Error fetching institutes:', error);
+        // Fallback to default institutes on error
+        console.warn('Using default institutes due to fetch error');
+        setInstitutes([
+          { _id: '1', name: 'SRMAP', location: 'Mangalagiri, AP' },
+          { _id: '2', name: 'VIT AP', location: 'Amaravati, AP' },
+          { _id: '3', name: 'SRM KTR', location: 'Kattankulathur, TN' },
+          { _id: '4', name: 'KLU', location: 'Vaddeswaram, AP' }
+        ]);
+        toast.warning('Using default institutes. Admin can add more later.');
+      } finally {
+        setInstitutesLoading(false);
+      }
+    };
+    fetchInstitutes();
+  }, []);
   const [emailError, setEmailError] = useState("");
 
   const validateGmail = (email: string) => {
@@ -89,9 +134,10 @@ const SignUp = () => {
     isPasswordValid() &&
     formData.password === formData.confirmPassword &&
     formData.role &&
+    formData.institute &&
     (formData.role !== "student" || formData.grade) &&
-    (formData.role !== "teacher" || (formData.subject && formData.school)) &&
-    (formData.role !== "admin" || (formData.adminCode && formData.institution));
+    (formData.role !== "teacher" || formData.subject) &&
+    (formData.role !== "admin" || formData.adminCode);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +161,13 @@ const SignUp = () => {
 
     try {
       const response = await axios.post<SignupResponse>(`${API_URL}/users/signup`, formData);
-      const { token, role } = response.data;
+      const { token, role, isSuperAdmin } = response.data;
 
       const decoded: any = jwtDecode(token);
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
+      localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
+      localStorage.setItem("permissions", JSON.stringify(decoded.permissions || []));
       const userProfile: Profile = {
         name: decoded.fullName || formData.fullName,
         email: decoded.email || formData.email,
@@ -143,6 +191,7 @@ const SignUp = () => {
         school: "",
         adminCode: "",
         institution: "",
+        institute: "",
       });
       setPasswordValidation({
         length: false,
@@ -342,6 +391,28 @@ const SignUp = () => {
                 </select>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="institute">Institute</Label>
+                <select
+                  id="institute"
+                  name="institute"
+                  value={formData.institute}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={institutesLoading}
+                >
+                  <option value="">
+                    {institutesLoading ? 'Loading institutes...' : 'Select your institute'}
+                  </option>
+                  {institutes.map((institute) => (
+                    <option key={institute._id} value={institute.name}>
+                      {institute.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {formData.role === "student" && (
                 <div className="space-y-2">
                   <Label htmlFor="grade">Grade Level</Label>
@@ -364,61 +435,36 @@ const SignUp = () => {
               )}
 
               {formData.role === "teacher" && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject Name</Label>
-                    <Input
-                      id="subject"
-                      name="subject"
-                      type="text"
-                      placeholder="Enter your subject name"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="school">School/Institution Name</Label>
-                    <Input
-                      id="school"
-                      name="school"
-                      type="text"
-                      placeholder="Enter your school/institution name"
-                      value={formData.school}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject Name</Label>
+                  <Input
+                    id="subject"
+                    name="subject"
+                    type="text"
+                    placeholder="Enter your subject name"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               )}
 
               {formData.role === "admin" && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminCode">Admin Code</Label>
-                    <Input
-                      id="adminCode"
-                      name="adminCode"
-                      type="text"
-                      placeholder="Enter admin code"
-                      value={formData.adminCode}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="institution">Institution Name</Label>
-                    <Input
-                      id="institution"
-                      name="institution"
-                      type="text"
-                      placeholder="Enter institution name"
-                      value={formData.institution}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <Label htmlFor="adminCode">Admin Code</Label>
+                  <Input
+                    id="adminCode"
+                    name="adminCode"
+                    type="text"
+                    placeholder="Enter admin code"
+                    value={formData.adminCode}
+                    onChange={handleChange}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 flex items-center">
+                    ℹ️ Super admin access code required. Contact system administrator if you don't have one.
+                  </p>
+                </div>
               )}
 
               <Button

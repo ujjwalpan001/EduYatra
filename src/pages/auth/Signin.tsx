@@ -24,6 +24,7 @@ interface Profile {
 interface LoginResponse {
   token: string;
   role: string;
+  isSuperAdmin?: boolean;
 }
 
 const SignIn = () => {
@@ -49,13 +50,15 @@ const SignIn = () => {
 
     try {
       const response = await axios.post<LoginResponse>(`${API_URL}/users/login`, formData);
-      const { token, role } = response.data;
+      const { token, role, isSuperAdmin } = response.data;
 
       const decoded: any = jwtDecode(token);
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
+      localStorage.setItem("isSuperAdmin", isSuperAdmin ? "true" : "false");
+      localStorage.setItem("permissions", JSON.stringify(decoded.permissions || []));
       const userProfile: Profile = {
-        name: decoded.fullName || "Unknown User",
+        name: decoded.username || decoded.fullName || "Unknown User",
         email: decoded.email || formData.email,
         bio: "",
         avatar: "/placeholder.svg",

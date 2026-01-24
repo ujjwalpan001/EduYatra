@@ -46,6 +46,24 @@ import PracticeExams from "./pages/Dashboard/student/PracticeExams";
 import TestPage from "./pages/Dashboard/student/TestPage";
 import ViewTestAnswers from "./pages/Dashboard/student/ViewTestAnswers";
 
+// Admin pages
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import Students from "./pages/admin/Students";
+import Teachers from "./pages/admin/Teachers";
+import Admins from "./pages/admin/Admins";
+import Classes from "./pages/admin/Classes";
+import Exams from "./pages/admin/Exams";
+import QuestionBanks from "./pages/admin/QuestionBanks";
+import Sliders from "./pages/admin/Sliders";
+import Posters from "./pages/admin/Posters";
+import Analytics from "./pages/admin/Analytics";
+import Institutes from "./pages/admin/Institutes";
+import Support from "./pages/admin/Support";
+import Subscriptions from "./pages/admin/Subscriptions";
+import Settings from "./pages/admin/Settings";
+import AuditLogs from "./pages/admin/AuditLogs";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -87,6 +105,26 @@ const App = () => (
             <Route path="/test" element={< TestPage />} />
             <Route path="/settings/general" element={<GeneralSettings />} />
             <Route path="/student/settings" element={<SettingsStudent />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="students" element={<Students />} />
+              <Route path="teachers" element={<Teachers />} />
+              <Route path="admins" element={<Admins />} />
+              <Route path="classes" element={<Classes />} />
+              <Route path="exams" element={<Exams />} />
+              <Route path="question-banks" element={<QuestionBanks />} />
+              <Route path="sliders" element={<Sliders />} />
+              <Route path="posters" element={<Posters />} />
+              <Route path="support" element={<Support />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="subscriptions" element={<Subscriptions />} />
+              <Route path="institutes" element={<Institutes />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="audit-logs" element={<AuditLogs />} />
+            </Route>
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
