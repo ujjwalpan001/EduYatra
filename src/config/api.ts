@@ -8,7 +8,7 @@
  */
 
 // Change this value to switch between local and production
-const USE_PRODUCTION = True;
+const USE_PRODUCTION = true;
 
 // API URLs
 const LOCAL_API_URL = 'http://localhost:5000/api';
