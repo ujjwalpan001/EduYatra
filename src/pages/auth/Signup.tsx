@@ -244,7 +244,7 @@ const SignUp = () => {
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sign Up for EduYatra</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sign Up for Deskoros</h1>
             <p className="text-sm sm:text-base text-gray-600">Join thousands of learners achieving their goals</p>
           </CardHeader>
 

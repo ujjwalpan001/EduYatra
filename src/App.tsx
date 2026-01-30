@@ -57,6 +57,7 @@ import Exams from "./pages/admin/Exams";
 import QuestionBanks from "./pages/admin/QuestionBanks";
 import Sliders from "./pages/admin/Sliders";
 import Posters from "./pages/admin/Posters";
+import Advertisements from "./pages/admin/Advertisements";
 import Analytics from "./pages/admin/Analytics";
 import Institutes from "./pages/admin/Institutes";
 import Support from "./pages/admin/Support";
@@ -117,6 +118,7 @@ const App = () => (
               <Route path="question-banks" element={<QuestionBanks />} />
               <Route path="sliders" element={<Sliders />} />
               <Route path="posters" element={<Posters />} />
+              <Route path="ads" element={<Advertisements />} />
               <Route path="support" element={<Support />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="subscriptions" element={<Subscriptions />} />
