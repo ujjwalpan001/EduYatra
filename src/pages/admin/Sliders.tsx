@@ -126,6 +126,7 @@ const Sliders: React.FC = () => {
       fetchSliders();
     } catch (error) {
       console.error('Error updating slider:', error);
+      alert('Failed to update slider status');
     }
   };
 

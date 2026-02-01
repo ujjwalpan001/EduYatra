@@ -127,6 +127,7 @@ const Posters: React.FC = () => {
       fetchPosters();
     } catch (error) {
       console.error('Error updating poster:', error);
+      alert('Failed to update poster status');
     }
   };
 

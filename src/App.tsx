@@ -58,6 +58,7 @@ import QuestionBanks from "./pages/admin/QuestionBanks";
 import Sliders from "./pages/admin/Sliders";
 import Posters from "./pages/admin/Posters";
 import Advertisements from "./pages/admin/Advertisements";
+import Video from "./pages/admin/Video";
 import Analytics from "./pages/admin/Analytics";
 import Institutes from "./pages/admin/Institutes";
 import Support from "./pages/admin/Support";
@@ -119,6 +120,7 @@ const App = () => (
               <Route path="sliders" element={<Sliders />} />
               <Route path="posters" element={<Posters />} />
               <Route path="ads" element={<Advertisements />} />
+              <Route path="video" element={<Video />} />
               <Route path="support" element={<Support />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="subscriptions" element={<Subscriptions />} />

@@ -79,6 +79,7 @@ const AdminLayout: React.FC = () => {
         { path: '/admin/sliders', label: 'Sliders' },
         { path: '/admin/posters', label: 'Posters' },
         { path: '/admin/ads', label: 'Advertisements' },
+        { path: '/admin/video', label: 'Video' },
       ],
     },
     { path: '/admin/support', icon: LifeBuoy, label: 'Support Tickets', permission: 'support' },
