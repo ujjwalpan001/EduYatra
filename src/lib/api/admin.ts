@@ -132,22 +132,22 @@ export const deletePoster = async (posterId: string) => {
 
 // Ads
 export const listAds = async (params: any) => {
-  const response = await api.get('/admin/ads', { params });
+  const response = await api.get('/admin/content/ads', { params });
   return response.data;
 };
 
 export const createAd = async (adData: any) => {
-  const response = await api.post('/admin/ads', adData);
+  const response = await api.post('/admin/content/ads', adData);
   return response.data;
 };
 
 export const updateAd = async (adId: string, updates: any) => {
-  const response = await api.put(`/admin/ads/${adId}`, updates);
+  const response = await api.put(`/admin/content/ads/${adId}`, updates);
   return response.data;
 };
 
 export const deleteAd = async (adId: string) => {
-  const response = await api.delete(`/admin/ads/${adId}`);
+  const response = await api.delete(`/admin/content/ads/${adId}`);
   return response.data;
 };
 

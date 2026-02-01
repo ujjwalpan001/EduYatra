@@ -9,24 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import { listAds, createAd, updateAd, deleteAd } from '../../lib/api/admin';
 
 interface Advertisement {
   _id: string;
@@ -72,6 +55,16 @@ interface AdFormData {
   sponsor_contact: string;
 }
 
+interface AdsResponse {
+  ads: Advertisement[];
+  pagination?: {
+    total: number;
+    page: number;
+    pages: number;
+    limit: number;
+  };
+}
+
 const Advertisements: React.FC = () => {
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,8 +93,8 @@ const Advertisements: React.FC = () => {
   const fetchAds = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/content/ads');
-      setAds(response.data.advertisements);
+      const response = await listAds({}) as AdsResponse;
+      setAds(response.ads || []);
     } catch (error) {
       console.error('Error fetching advertisements:', error);
     } finally {
@@ -123,10 +116,10 @@ const Advertisements: React.FC = () => {
       };
       
       if (editingAd) {
-        await api.put(`/api/admin/content/ads/${editingAd._id}`, submitData);
+        await updateAd(editingAd._id, submitData);
         alert('Advertisement updated successfully!');
       } else {
-        await api.post('/api/admin/content/ads', submitData);
+        await createAd(submitData);
         alert('Advertisement created successfully!');
       }
       setShowModal(false);
@@ -135,7 +128,7 @@ const Advertisements: React.FC = () => {
     } catch (error: unknown) {
       console.error('Error saving advertisement:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save advertisement';
-      const apiError = (error as any)?.response?.data?.error;
+      const apiError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
       alert('Error: ' + (apiError || errorMessage));
     }
   };
@@ -143,7 +136,7 @@ const Advertisements: React.FC = () => {
   const handleDelete = async (adId: string) => {
     if (window.confirm('Are you sure you want to delete this advertisement?')) {
       try {
-        await api.delete(`/api/admin/content/ads/${adId}`);
+        await deleteAd(adId);
         fetchAds();
       } catch (error) {
         console.error('Error deleting advertisement:', error);
@@ -153,7 +146,7 @@ const Advertisements: React.FC = () => {
 
   const toggleActive = async (adId: string, currentStatus: boolean) => {
     try {
-      await api.put(`/api/admin/content/ads/${adId}`, { is_active: !currentStatus });
+      await updateAd(adId, { is_active: !currentStatus });
       fetchAds();
     } catch (error) {
       console.error('Error updating advertisement:', error);
