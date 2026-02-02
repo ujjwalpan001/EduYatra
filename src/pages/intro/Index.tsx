@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Navbar from './navbar';
 import { getPublicSliders, getPublicPosters, getPublicAds, getPublicSuccessStories, getPublicVideo } from '@/lib/api/public';
+import { API_URL } from '@/config/api';
 
 const Index: React.FC = () => {
   const [sliders, setSliders] = useState<any[]>([]);
@@ -54,7 +55,7 @@ const Index: React.FC = () => {
 
   const trackAdClick = async (adId: string) => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/public/ads/${adId}/click`, {
+      await fetch(`${API_URL}/public/ads/${adId}/click`, {
         method: 'POST'
       });
     } catch (error) {
