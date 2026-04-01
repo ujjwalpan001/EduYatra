@@ -17,20 +17,9 @@ interface Institute {
   name: string;
 }
 
-interface Course {
-  _id: string;
-  course_code: string;
-  name: string;
-}
-
 interface InstituteResponse {
   success: boolean;
   institutes: Institute[];
-}
-
-interface CourseResponse {
-  success: boolean;
-  courses: Course[];
 }
 
 interface ClassesResponse {
@@ -66,7 +55,6 @@ interface ClassResponse {
 export function StudentBatchList() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [institutes, setInstitutes] = useState<Institute[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -107,13 +95,6 @@ export function StudentBatchList() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setInstitutes(institutesResponse.data.institutes);
-
-        // Fetch courses
-        const coursesResponse = await axios.get<CourseResponse>(
-          `${API_URL}/exams/courses`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setCourses(coursesResponse.data.courses);
 
         // Fetch classes
         const classesResponse = await axios.get<ClassesResponse>(
@@ -343,10 +324,10 @@ export function StudentBatchList() {
 
   // Save batch (create or update)
   const saveBatch = async () => {
-    if (!batchName || (!editingBatchId && (!invitationCode || !instituteId || !courseId))) {
+    if (!batchName || (!editingBatchId && (!invitationCode || !instituteId))) {
       toast({
         title: "Invalid input",
-        description: "Please fill all required fields (Batch Name, Invitation Code, Institute, and Course)",
+        description: "Please fill all required fields (Batch Name, Invitation Code, and Institute)",
         variant: "destructive",
       });
       return;
@@ -869,19 +850,12 @@ export function StudentBatchList() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Course</label>
-                  <Select value={courseId} onValueChange={setCourseId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map(course => (
-                        <SelectItem key={course._id} value={course._id}>
-                          {course.name} ({course.course_code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium">Course ID / Name</label>
+                  <Input
+                    value={courseId}
+                    onChange={(e) => setCourseId(e.target.value)}
+                    placeholder="Enter course ID or name (e.g. CS101)"
+                  />
                 </div>
               </>
             )}

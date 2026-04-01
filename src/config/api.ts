@@ -8,18 +8,18 @@
  */
 
 // Change this value to switch between local and production
-const USE_PRODUCTION = true;
+const USE_PRODUCTION = false;
 
 // API URLs
 const LOCAL_API_URL = 'http://localhost:5000/api';
 const PRODUCTION_API_URL = 'https://eduyatrabackend.onrender.com/api';
-  
+
 // Export the active API URL
 export const API_URL = USE_PRODUCTION ? PRODUCTION_API_URL : LOCAL_API_URL;
 
 // Export the base URL without /api for special cases
-export const BASE_URL = USE_PRODUCTION 
-  ? 'https://eduyatrabackend.onrender.com' 
+export const BASE_URL = USE_PRODUCTION
+  ? 'https://eduyatrabackend.onrender.com'
   : LOCAL_API_URL.replace('/api', '');
 
 // Helper function to construct full API URLs
