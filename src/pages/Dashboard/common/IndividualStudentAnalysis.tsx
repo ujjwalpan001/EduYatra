@@ -54,6 +54,8 @@ interface RecentTest {
   time_spent_minutes: number;
   submitted_at: string;
   correct_answers: number;
+  retest_enabled?: boolean;
+  retest_set_number?: number | null;
 }
 
 interface SubjectPerformance {
@@ -92,6 +94,7 @@ const IndividualStudentAnalysis = () => {
   const [selectedStudent, setSelectedStudent] = useState<DetailedAnalysis | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [togglingRetestFor, setTogglingRetestFor] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStudents();
@@ -178,6 +181,64 @@ const IndividualStudentAnalysis = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleToggleRetest = async (test: RecentTest) => {
+    if (!selectedStudent?.student?.student_id) {
+      toast.error("Student details are not loaded");
+      return;
+    }
+
+    const nextEnable = !test.retest_enabled;
+    setTogglingRetestFor(test.exam_id);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("❌ Please log in");
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/exams/student-analysis/toggle-retest`,
+        {
+          examId: test.exam_id,
+          studentId: selectedStudent.student.student_id,
+          enable: nextEnable,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data?.success) {
+        const returnedSetNumber = response.data?.set_number ?? null;
+        setSelectedStudent((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            recent_tests: prev.recent_tests.map((item) =>
+              item.exam_id === test.exam_id
+                ? {
+                    ...item,
+                    retest_enabled: nextEnable,
+                    retest_set_number: nextEnable ? returnedSetNumber : null,
+                  }
+                : item
+            ),
+          };
+        });
+
+        toast.success(
+          nextEnable
+            ? `Retest enabled${returnedSetNumber ? ` (Set ${returnedSetNumber})` : ""}`
+            : "Retest disabled"
+        );
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "Failed to toggle retest";
+      toast.error(message);
+    } finally {
+      setTogglingRetestFor(null);
+    }
   };
 
   if (loading) {
@@ -436,15 +497,32 @@ const IndividualStudentAnalysis = () => {
                                 <td className="p-3 text-right">{test.time_spent_minutes} min</td>
                                 <td className="p-3 text-sm">{formatDateTime(test.submitted_at)}</td>
                                 <td className="p-3 text-center">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => navigate(`/teacher/test-answers/${test.submission_id}`)}
-                                    className="gap-2"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    View Answers
-                                  </Button>
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => navigate(`/teacher/test-answers/${test.submission_id}`)}
+                                      className="gap-2"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      View Answers
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant={test.retest_enabled ? "destructive" : "default"}
+                                      disabled={togglingRetestFor === test.exam_id}
+                                      onClick={() => handleToggleRetest(test)}
+                                    >
+                                      {togglingRetestFor === test.exam_id
+                                        ? "Updating..."
+                                        : test.retest_enabled
+                                          ? "Disable Retest"
+                                          : "Enable Retest"}
+                                    </Button>
+                                  </div>
+                                  {test.retest_enabled && test.retest_set_number && (
+                                    <p className="text-xs text-muted-foreground mt-2">Retest Set: {test.retest_set_number}</p>
+                                  )}
                                 </td>
                               </tr>
                             ))}

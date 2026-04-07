@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Save, Eye, X, Upload, Check, Loader2, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Save, Eye, X, Upload, Check, Loader2, Settings, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import 'katex/dist/katex.min.css';
 import { renderKatex, KatexRenderer } from '@/lib/katex-rendering';
 import ReactDOMServer from 'react-dom/server';
@@ -86,6 +86,87 @@ const CreateQuestion = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateForm, setShowTemplateForm] = useState(false);
   const [includeSolution, setIncludeSolution] = useState(false);
+
+  const buildLLMPrompt = (withSolution: boolean): string => {
+    const subject = formData.subject || "<SUBJECT>";
+    const difficulty = formData.difficulty || "<DIFFICULTY: Easy/Medium/Hard>";
+    const questionType = formData.questionType || "MCQ";
+    const topic = formData.topic || "<TOPIC>";
+    const courseCode = formData.courseCode || "<COURSE_CODE>";
+    const questionBankName = formData.questionBankName || "<QUESTION_BANK_NAME>";
+    const instituteName = formData.instituteName || "<INSTITUTE_NAME>";
+
+    if (!withSolution) {
+      return `You are an expert teacher and exam setter. Generate 10 high-quality ${questionType} questions for the following academic context.
+
+Context:
+- Subject: ${subject}
+- Topic/Chapter: ${topic}
+- Difficulty: ${difficulty}
+- Course Code: ${courseCode}
+- Question Bank Name: ${questionBankName}
+- Institute Name: ${instituteName}
+
+Mandatory output rules:
+1. Output plain text only. Do not use numbering, bullets, labels, markdown, or code fences.
+2. For EACH question, return EXACTLY 5 lines in this exact order:
+   Line 1: Question text (LaTeX allowed with $...$ or $$...$$)
+   Line 2: Correct option
+   Line 3: Incorrect option 1
+   Line 4: Incorrect option 2
+   Line 5: Incorrect option 3
+3. Do not include explanations or solution lines.
+4. Keep options concise and non-repetitive.
+5. Ensure only one option is correct.
+6. Keep each question aligned with the context above.
+
+Important formatting rule:
+- After line 5, immediately start the next question on the next line.
+- Do not add blank lines between questions.
+
+Now generate the questions.`;
+    }
+
+    return `You are an expert teacher and exam setter. Generate 10 high-quality ${questionType} questions for the following academic context, with step-by-step solutions.
+
+Context:
+- Subject: ${subject}
+- Topic/Chapter: ${topic}
+- Difficulty: ${difficulty}
+- Course Code: ${courseCode}
+- Question Bank Name: ${questionBankName}
+- Institute Name: ${instituteName}
+
+Mandatory output rules:
+1. Output plain text only. Do not use numbering, bullets, labels, markdown, or code fences.
+2. For EACH question, return at least 6 lines in this exact order:
+   Line 1: Question text (LaTeX allowed with $...$ or $$...$$)
+   Line 2: Correct option
+   Line 3: Incorrect option 1
+   Line 4: Incorrect option 2
+   Line 5: Incorrect option 3
+   Line 6+: Detailed step-by-step solution (can be multiple lines)
+3. Keep solution clear and instructional.
+4. Ensure only one option is correct.
+5. Keep each question aligned with the context above.
+
+Important formatting rule:
+- Add exactly one blank line between questions.
+- Do not add any extra heading text.
+
+Now generate the questions.`;
+  };
+
+  const copyPromptToClipboard = async (withSolution: boolean) => {
+    const prompt = buildLLMPrompt(withSolution);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast.success(withSolution ? "Prompt with solution copied!" : "Prompt without solution copied!");
+    } catch (error) {
+      console.error('Failed to copy prompt:', error);
+      toast.error("Could not copy prompt. Please copy manually.");
+    }
+  };
 
   // Authenticate user and fetch data
   useEffect(() => {
@@ -1096,6 +1177,39 @@ const CreateQuestion = () => {
 
                   </div>
                 )}
+
+                <Card className="p-4 border-primary/20 bg-primary/5">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Label className="text-base">Ready-to-Copy LLM Prompt</Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {includeSolution
+                            ? "Solution mode is ON. The prompt asks the LLM to return solutions after each question."
+                            : "Solution mode is OFF. The prompt asks the LLM to return only question and options."}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyPromptToClipboard(includeSolution)}
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copy Prompt
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{includeSolution ? "Prompt with solution" : "Prompt without solution"}</Label>
+                      <Textarea
+                        value={buildLLMPrompt(includeSolution)}
+                        readOnly
+                        className={includeSolution ? "min-h-[220px] text-xs font-mono" : "min-h-[180px] text-xs font-mono"}
+                      />
+                    </div>
+                  </div>
+                </Card>
 
                 <div className="space-y-2">
                   <Label htmlFor="template">Paste Questions Here *</Label>
