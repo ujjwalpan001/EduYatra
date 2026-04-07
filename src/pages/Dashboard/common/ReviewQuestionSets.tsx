@@ -33,9 +33,12 @@ interface QuestionBank {
   course_code: string;
   questions: number;
   difficulty: string;
-  visibility: 'public' | 'private' | 'shared';
+  visibility: 'public' | 'private';
   created_at: string;
   updated_at: string;
+  isOwner?: boolean;
+  createdByName?: string | null;
+  created_by_id?: string | null;
 }
 
 interface Question {
@@ -53,6 +56,7 @@ interface Question {
   katex_solution?: string;
   topic?: string;
   Sub_topic?: string;
+  visibility?: 'public' | 'private';
 }
 
 interface QuestionBankResponse {
@@ -84,8 +88,14 @@ const ReviewQuestionSets = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isEditSetOpen, setIsEditSetOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [bankToDelete, setBankToDelete] = useState<QuestionBank | null>(null);
+  const [isDeletingBank, setIsDeletingBank] = useState(false);
   const [selectedBank, setSelectedBank] = useState<QuestionBank | null>(null);
   const [newBank, setNewBank] = useState({ name: "", course_code: "", visibility: "private" });
+  const [editSetData, setEditSetData] = useState({ name: "", course_code: "", visibility: "private" });
+  const [savingEditSet, setSavingEditSet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [questionSearchQuery, setQuestionSearchQuery] = useState("");
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -133,6 +143,9 @@ const ReviewQuestionSets = () => {
                   visibility: bank.visibility,
                   created_at: bank.created_at,
                   updated_at: bank.updated_at,
+                  isOwner: bank.isOwner,
+                  createdByName: bank.createdByName,
+                  created_by_id: bank.created_by_id,
                 };
               } catch (error) {
                 console.error(`Error fetching questions for bank ${bank._id}:`, error);
@@ -217,7 +230,7 @@ const ReviewQuestionSets = () => {
     setSelectedBank(bank);
     setIsPreviewOpen(true);
     setLoadingQuestions(true);
-    
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -236,7 +249,7 @@ const ReviewQuestionSets = () => {
       if (response.data.success && response.data.questions) {
         console.log('✅ Setting preview questions:', response.data.questions);
         console.log('📊 Number of questions:', response.data.questions.length);
-        
+
         // Log first question details for debugging
         if (response.data.questions.length > 0) {
           const firstQ = response.data.questions[0];
@@ -259,10 +272,10 @@ const ReviewQuestionSets = () => {
             solutionLatexPreview: firstQ.solution_latex?.substring(0, 50) || 'NO SOLUTION'
           });
         }
-        
+
         setPreviewQuestions(response.data.questions);
         console.log(`✅ Loaded ${response.data.questions.length} questions`);
-        
+
         if (response.data.questions.length === 0) {
           toast.info("ℹ️ This question bank has no questions yet");
         }
@@ -281,9 +294,9 @@ const ReviewQuestionSets = () => {
 
   const handleEditQuestion = (question: Question) => {
     setEditingQuestionId(question._id);
-    setEditedQuestion({ 
-      ...question, 
-      incorrect_option_latex: question.incorrect_option_latex ? [...question.incorrect_option_latex] : [] 
+    setEditedQuestion({
+      ...question,
+      incorrect_option_latex: question.incorrect_option_latex ? [...question.incorrect_option_latex] : []
     });
   };
 
@@ -330,6 +343,87 @@ const ReviewQuestionSets = () => {
     setEditedQuestion(null);
   };
 
+  const handleOpenEditSet = () => {
+    if (!selectedBank) return;
+    setEditSetData({
+      name: selectedBank.name,
+      course_code: selectedBank.course_code,
+      visibility: selectedBank.visibility,
+    });
+    setIsEditSetOpen(true);
+  };
+
+  const handleDeleteBank = async () => {
+    if (!bankToDelete) return;
+    setIsDeletingBank(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) { toast.error("Please log in"); return; }
+
+      const res = await axios.delete<{ success: boolean; error?: string }>(
+        `${API_URL}/question-banks/${bankToDelete._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        setQuestionBanks((prev) => prev.filter((b) => b._id !== bankToDelete._id));
+        setIsDeleteConfirmOpen(false);
+        setBankToDelete(null);
+        if (selectedBank?._id === bankToDelete._id) {
+          setIsPreviewOpen(false);
+          setSelectedBank(null);
+        }
+        toast.success("✅ Question bank deleted successfully!");
+      } else {
+        toast.error(`❌ ${res.data.error || 'Failed to delete'}`);
+      }
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      toast.error(axiosError.response?.data?.error || "⚠️ Failed to delete question bank");
+    } finally {
+      setIsDeletingBank(false);
+    }
+  };
+
+  const handleUpdateBank = async () => {
+
+    if (!selectedBank) return;
+    setSavingEditSet(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) { toast.error("Please log in"); return; }
+
+      const res = await axios.patch<{ success: boolean; questionBank?: QuestionBank; error?: string }>(
+        `${API_URL}/question-banks/${selectedBank._id}`,
+        editSetData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        // Update local state
+        setQuestionBanks((prev) =>
+          prev.map((b) =>
+            b._id === selectedBank._id
+              ? { ...b, name: editSetData.name, course_code: editSetData.course_code, visibility: editSetData.visibility as QuestionBank['visibility'], updated_at: new Date().toISOString() }
+              : b
+          )
+        );
+        setSelectedBank((prev) =>
+          prev ? { ...prev, name: editSetData.name, course_code: editSetData.course_code, visibility: editSetData.visibility as QuestionBank['visibility'] } : null
+        );
+        setIsEditSetOpen(false);
+        toast.success("✅ Question bank updated successfully!");
+      } else {
+        toast.error(`❌ Failed to update: ${res.data.error || 'Unknown error'}`);
+      }
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      toast.error(axiosError.response?.data?.error || "⚠️ Failed to update question bank");
+    } finally {
+      setSavingEditSet(false);
+    }
+  };
+
   const handleOptionChange = (index: number, value: string) => {
     if (!editedQuestion) return;
     const newOptions = [...(editedQuestion.incorrect_option_latex || [])];
@@ -352,7 +446,7 @@ const ReviewQuestionSets = () => {
       (question.subject && question.subject.toLowerCase().includes(questionSearchQuery.toLowerCase())) ||
       (question.topic && question.topic.toLowerCase().includes(questionSearchQuery.toLowerCase()))
   );
-  
+
   // Log filtered questions
   console.log('🔍 Preview Dialog - filteredQuestions:', filteredQuestions.length, 'questions');
   if (filteredQuestions.length > 0) {
@@ -371,9 +465,9 @@ const ReviewQuestionSets = () => {
         <div className="flex items-center justify-between animate-fade-in">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              Review Question Sets
+              Review Question Banks
             </h1>
-            <p className="text-muted-foreground mt-2">Manage and review all question sets</p>
+            <p className="text-muted-foreground mt-2">Manage and review all question banks</p>
           </div>
           <div className="flex gap-4">
             <Button variant="outline">
@@ -384,12 +478,12 @@ const ReviewQuestionSets = () => {
               <DialogTrigger asChild>
                 <Button className="bg-gradient-to-r from-primary to-primary/80">
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Create New Set
+                  Create New Bank
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px] glass-effect border-primary/20">
                 <DialogHeader>
-                  <DialogTitle>Create New Question Set</DialogTitle>
+                  <DialogTitle>Create New Question Banks</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -418,9 +512,8 @@ const ReviewQuestionSets = () => {
                       onChange={(e) => setNewBank({ ...newBank, visibility: e.target.value })}
                       className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="private">Private</option>
-                      <option value="public">Public</option>
-                      <option value="shared">Shared</option>
+                      <option value="private">🔒 Private — only visible to you</option>
+                      <option value="public">🌐 Public — visible to all teachers</option>
                     </select>
                   </div>
                   <div className="flex justify-end gap-2">
@@ -442,7 +535,7 @@ const ReviewQuestionSets = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search question sets..."
+                  placeholder="Search question banks..."
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -453,7 +546,7 @@ const ReviewQuestionSets = () => {
           </CardContent>
         </Card>
 
-        {/* Question Sets Grid */}
+        {/* Question Bank Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {loading ? (
             <p className="text-muted-foreground">Loading question banks...</p>
@@ -468,15 +561,24 @@ const ReviewQuestionSets = () => {
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{set.name}</CardTitle>
-                    <div className="flex gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg truncate">{set.name}</CardTitle>
+                      {/* Show creator name for other teachers' public/shared banks */}
+                      {!set.isOwner && set.createdByName && (
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <Globe className="h-3 w-3" />
+                          By: {set.createdByName}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 ml-2 flex-shrink-0">
                       <Badge
                         variant={
                           set.difficulty === 'Hard'
                             ? 'destructive'
                             : set.difficulty === 'Medium'
-                            ? 'default'
-                            : 'secondary'
+                              ? 'default'
+                              : 'secondary'
                         }
                       >
                         {set.difficulty}
@@ -484,8 +586,6 @@ const ReviewQuestionSets = () => {
                       <Badge variant="outline">
                         {set.visibility === 'public' ? (
                           <Globe className="h-3 w-3 mr-1" />
-                        ) : set.visibility === 'shared' ? (
-                          <Users className="h-3 w-3 mr-1" />
                         ) : (
                           <Lock className="h-3 w-3 mr-1" />
                         )}
@@ -515,13 +615,28 @@ const ReviewQuestionSets = () => {
                         <Eye className="h-4 w-4 mr-1" />
                         Preview
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {/* Edit and Delete only available to the bank owner */}
+                      {set.isOwner !== false && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handlePreview(set)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            onClick={() => { setBankToDelete(set); setIsDeleteConfirmOpen(true); }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -552,10 +667,13 @@ const ReviewQuestionSets = () => {
                   <Search className="h-4 w-4 mr-2" />
                   Search
                 </Button>
-                <Button variant="outline" className="h-10 px-4">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Set
-                </Button>
+                {/* Edit Set — only owner can edit */}
+                {selectedBank?.isOwner !== false && (
+                  <Button variant="outline" className="h-10 px-4" onClick={handleOpenEditSet}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Bank
+                  </Button>
+                )}
               </div>
               {/* Questions List */}
               <div className="max-h-[70vh] overflow-y-auto pr-2 space-y-6">
@@ -573,321 +691,440 @@ const ReviewQuestionSets = () => {
                         <p className="text-sm text-muted-foreground mt-2">Try adjusting your search or add questions to this bank.</p>
                       </div>
                     ) : (
-                    filteredQuestions.map((question, index) => {
-                      return (
-                      <Card key={question._id} className="overflow-hidden border-2 hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
-                        <CardContent className="p-0">
-                          {editingQuestionId === question._id ? (
-                            <div className="p-6 space-y-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20">
-                              <div className="flex items-center justify-between pb-4 border-b">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                  <Edit className="h-5 w-5 text-primary" />
-                                  Editing Question #{index + 1}
-                                </h3>
-                                <Badge variant="secondary">{question.question_type || 'MCQ'}</Badge>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label htmlFor={`latex-${question._id}`} className="text-base font-semibold">Question Text</Label>
-                                <Textarea
-                                  id={`latex-${question._id}`}
-                                  value={editedQuestion?.latex_code || ''}
-                                  onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, latex_code: e.target.value })
-                                  }
-                                  placeholder="Enter question in LaTeX format (e.g., $x^2 + 3x$)"
-                                  rows={3}
-                                  className="font-mono text-sm"
-                                />
-                                {/* Live Preview */}
-                                {editedQuestion?.latex_code && (
-                                  <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Preview:</p>
-                                    <div className="text-base">
-                                      <KatexRenderer>
-                                        {editedQuestion.latex_code}
-                                      </KatexRenderer>
-                                    </div>
+                      filteredQuestions.map((question, index) => {
+                        return (
+                          <Card key={question._id} className="overflow-hidden border-2 hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
+                            <CardContent className="p-0">
+                              {editingQuestionId === question._id ? (
+                                <div className="p-6 space-y-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20">
+                                  <div className="flex items-center justify-between pb-4 border-b">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                                      <Edit className="h-5 w-5 text-primary" />
+                                      Editing Question #{index + 1}
+                                    </h3>
+                                    <Badge variant="secondary">{question.question_type || 'MCQ'}</Badge>
                                   </div>
-                                )}
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`subject-${question._id}`}>Subject</Label>
-                                  <Input
-                                    id={`subject-${question._id}`}
-                                    value={editedQuestion?.subject || ''}
-                                    onChange={(e) =>
-                                      setEditedQuestion({ ...editedQuestion!, subject: e.target.value })
-                                    }
-                                    placeholder="Enter subject"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`topic-${question._id}`}>Topic</Label>
-                                  <Input
-                                    id={`topic-${question._id}`}
-                                    value={editedQuestion?.topic || ''}
-                                    onChange={(e) =>
-                                      setEditedQuestion({ ...editedQuestion!, topic: e.target.value })
-                                    }
-                                    placeholder="Enter topic"
-                                  />
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label htmlFor={`difficulty-${question._id}`}>Difficulty Rating (1-5)</Label>
-                                <Input
-                                  id={`difficulty-${question._id}`}
-                                  type="number"
-                                  min="1"
-                                  max="5"
-                                  value={editedQuestion?.difficulty_rating || 1}
-                                  onChange={(e) =>
-                                    setEditedQuestion({
-                                      ...editedQuestion!,
-                                      difficulty_rating: parseInt(e.target.value),
-                                    })
-                                  }
-                                  className="w-32"
-                                />
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label htmlFor={`correct-${question._id}`} className="text-base font-semibold">Correct Answer</Label>
-                                <Textarea
-                                  id={`correct-${question._id}`}
-                                  value={editedQuestion?.correct_option_latex || ''}
-                                  onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, correct_option_latex: e.target.value })
-                                  }
-                                  placeholder="Enter correct answer in LaTeX format"
-                                  rows={2}
-                                  className="font-mono text-sm"
-                                />
-                                {editedQuestion?.correct_option_latex && (
-                                  <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-green-200 dark:border-green-800">
-                                    <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Preview:</p>
-                                    <div className="text-sm">
-                                      <KatexRenderer>
-                                        {editedQuestion.correct_option_latex}
-                                      </KatexRenderer>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label className="text-base font-semibold">Incorrect Options</Label>
-                                {editedQuestion?.incorrect_option_latex?.map((option, idx) => (
-                                  <div key={idx} className="space-y-2">
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`latex-${question._id}`} className="text-base font-semibold">Question Text</Label>
                                     <Textarea
-                                      value={option}
-                                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                                      placeholder={`Incorrect option ${idx + 1}`}
-                                      rows={2}
+                                      id={`latex-${question._id}`}
+                                      value={editedQuestion?.latex_code || ''}
+                                      onChange={(e) =>
+                                        setEditedQuestion({ ...editedQuestion!, latex_code: e.target.value })
+                                      }
+                                      placeholder="Enter question in LaTeX format (e.g., $x^2 + 3x$)"
+                                      rows={3}
                                       className="font-mono text-sm"
                                     />
-                                    {option && (
-                                      <div className="p-2 bg-white dark:bg-gray-900 rounded border-2 border-gray-200 dark:border-gray-800">
-                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
-                                        <div className="text-sm">
+                                    {/* Live Preview */}
+                                    {editedQuestion?.latex_code && (
+                                      <div className="p-4 bg-white dark:bg-gray-900 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                                        <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Preview:</p>
+                                        <div className="text-base">
                                           <KatexRenderer>
-                                            {option}
+                                            {editedQuestion.latex_code}
                                           </KatexRenderer>
                                         </div>
                                       </div>
                                     )}
                                   </div>
-                                ))}
-                              </div>
-                              
-                              <div className="space-y-2">
-                                <Label htmlFor={`solution-${question._id}`} className="text-base font-semibold">Solution (Optional)</Label>
-                                <Textarea
-                                  id={`solution-${question._id}`}
-                                  value={editedQuestion?.solution_latex || ''}
-                                  onChange={(e) =>
-                                    setEditedQuestion({ ...editedQuestion!, solution_latex: e.target.value })
-                                  }
-                                  placeholder="Enter solution in LaTeX format"
-                                  rows={4}
-                                  className="font-mono text-sm"
-                                />
-                                {editedQuestion?.solution_latex && (
-                                  <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-purple-200 dark:border-purple-800">
-                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">Preview:</p>
-                                    <div className="text-sm">
-                                      <KatexRenderer>
-                                        {editedQuestion.solution_latex}
-                                      </KatexRenderer>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`subject-${question._id}`}>Subject</Label>
+                                      <Input
+                                        id={`subject-${question._id}`}
+                                        value={editedQuestion?.subject || ''}
+                                        onChange={(e) =>
+                                          setEditedQuestion({ ...editedQuestion!, subject: e.target.value })
+                                        }
+                                        placeholder="Enter subject"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`topic-${question._id}`}>Topic</Label>
+                                      <Input
+                                        id={`topic-${question._id}`}
+                                        value={editedQuestion?.topic || ''}
+                                        onChange={(e) =>
+                                          setEditedQuestion({ ...editedQuestion!, topic: e.target.value })
+                                        }
+                                        placeholder="Enter topic"
+                                      />
                                     </div>
                                   </div>
-                                )}
-                              </div>
-                              
-                              <div className="flex justify-end gap-3 pt-4 border-t">
-                                <Button
-                                  variant="outline"
-                                  size="default"
-                                  onClick={handleCancelEdit}
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Cancel
-                                </Button>
-                                <Button
-                                  size="default"
-                                  onClick={() => handleSaveQuestion(question._id)}
-                                  className="bg-gradient-to-r from-primary to-primary/80"
-                                >
-                                  <Save className="h-4 w-4 mr-2" />
-                                  Save Changes
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="divide-y">
-                              {/* Header Section */}
-                              <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-3">
-                                      <Badge variant="default" className="text-sm px-3 py-1">
-                                        Question #{index + 1}
-                                      </Badge>
-                                      <Badge variant="secondary" className="text-sm">
-                                        {question.question_type || 'MCQ'}
-                                      </Badge>
-                                      <Badge variant={question.difficulty_rating >= 3 ? 'destructive' : question.difficulty_rating >= 2 ? 'default' : 'secondary'}>
-                                        {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
-                                      </Badge>
-                                    </div>
-                                    <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed break-words whitespace-normal">
-                                      {question.latex_code ? (
-                                        <KatexRenderer>
-                                          {question.latex_code}
-                                        </KatexRenderer>
-                                      ) : question.katex_code ? (
-                                        <div dangerouslySetInnerHTML={{ __html: question.katex_code }} />
-                                      ) : (
-                                        <span className="italic text-gray-500">No question text available</span>
-                                      )}
-                                    </div>
-                                    {(question.subject || question.topic) && (
-                                      <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-                                        {question.subject && <span>📚 {question.subject}</span>}
-                                        {question.topic && <span>🏷️ {question.topic}</span>}
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`difficulty-${question._id}`}>Difficulty Rating (1-5)</Label>
+                                    <Input
+                                      id={`difficulty-${question._id}`}
+                                      type="number"
+                                      min="1"
+                                      max="5"
+                                      value={editedQuestion?.difficulty_rating || 1}
+                                      onChange={(e) =>
+                                        setEditedQuestion({
+                                          ...editedQuestion!,
+                                          difficulty_rating: parseInt(e.target.value),
+                                        })
+                                      }
+                                      className="w-32"
+                                    />
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`correct-${question._id}`} className="text-base font-semibold">Correct Answer</Label>
+                                    <Textarea
+                                      id={`correct-${question._id}`}
+                                      value={editedQuestion?.correct_option_latex || ''}
+                                      onChange={(e) =>
+                                        setEditedQuestion({ ...editedQuestion!, correct_option_latex: e.target.value })
+                                      }
+                                      placeholder="Enter correct answer in LaTeX format"
+                                      rows={2}
+                                      className="font-mono text-sm"
+                                    />
+                                    {editedQuestion?.correct_option_latex && (
+                                      <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-green-200 dark:border-green-800">
+                                        <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-1">Preview:</p>
+                                        <div className="text-sm">
+                                          <KatexRenderer>
+                                            {editedQuestion.correct_option_latex}
+                                          </KatexRenderer>
+                                        </div>
                                       </div>
                                     )}
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEditQuestion(question)}
-                                    className="hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                                  >
-                                    <Edit className="h-5 w-5" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {/* Options Section */}
-                              <div className="p-5 space-y-4">
-                                {/* Correct Answer */}
-                                {(question.correct_option_latex || question.correct_option_katex) && (
-                                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border-2 border-green-200 dark:border-green-800">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
-                                        ✓
-                                      </div>
-                                      <span className="font-semibold text-green-700 dark:text-green-300">Correct Answer</span>
-                                    </div>
-                                    <div className="text-base text-green-900 dark:text-green-100 ml-8 break-words whitespace-normal">
-                                      {question.correct_option_latex ? (
-                                        <KatexRenderer>
-                                          {question.correct_option_latex}
-                                        </KatexRenderer>
-                                      ) : question.correct_option_katex ? (
-                                        <div dangerouslySetInnerHTML={{ __html: question.correct_option_katex }} />
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Incorrect Options */}
-                                {((question.incorrect_option_latex && question.incorrect_option_latex.length > 0) || 
-                                  (question.incorrect_option_katex && question.incorrect_option_katex.length > 0)) && (
+
                                   <div className="space-y-2">
-                                    <span className="font-semibold text-sm text-muted-foreground">Incorrect Options:</span>
-                                    {(question.incorrect_option_latex || question.incorrect_option_katex || []).map((option, idx) => (
-                                      <div key={idx} className="p-4 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                                        <div className="flex items-start gap-3">
-                                          <div className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                            ✗
-                                          </div>
-                                          <div className="text-base text-red-900 dark:text-red-100 flex-1 break-words whitespace-normal">
-                                            {question.incorrect_option_latex && question.incorrect_option_latex[idx] ? (
+                                    <Label className="text-base font-semibold">Incorrect Options</Label>
+                                    {editedQuestion?.incorrect_option_latex?.map((option, idx) => (
+                                      <div key={idx} className="space-y-2">
+                                        <Textarea
+                                          value={option}
+                                          onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                          placeholder={`Incorrect option ${idx + 1}`}
+                                          rows={2}
+                                          className="font-mono text-sm"
+                                        />
+                                        {option && (
+                                          <div className="p-2 bg-white dark:bg-gray-900 rounded border-2 border-gray-200 dark:border-gray-800">
+                                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
+                                            <div className="text-sm">
                                               <KatexRenderer>
-                                                {question.incorrect_option_latex[idx]}
+                                                {option}
                                               </KatexRenderer>
-                                            ) : question.incorrect_option_katex && question.incorrect_option_katex[idx] ? (
-                                              <div dangerouslySetInnerHTML={{ __html: question.incorrect_option_katex[idx] }} />
-                                            ) : null}
+                                            </div>
                                           </div>
-                                        </div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
-                                )}
-                              </div>
-                              
-                              {/* Solution Section */}
-                              {(() => {
-                                const hasSolution = question.solution_latex || question.katex_solution;
-                                console.log(`🔍 Question ${question._id} solution check:`, {
-                                  hasSolution,
-                                  solution_latex: question.solution_latex,
-                                  katex_solution: question.katex_solution,
-                                  solutionLatexLength: question.solution_latex?.length || 0,
-                                  katexSolutionLength: question.katex_solution?.length || 0
-                                });
-                                return hasSolution;
-                              })() && (
-                                <div className="p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="h-7 w-7 rounded-full bg-purple-500 flex items-center justify-center text-white text-lg">
-                                      💡
-                                    </div>
-                                    <span className="font-bold text-lg text-purple-700 dark:text-purple-300">Solution</span>
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`solution-${question._id}`} className="text-base font-semibold">Solution (Optional)</Label>
+                                    <Textarea
+                                      id={`solution-${question._id}`}
+                                      value={editedQuestion?.solution_latex || ''}
+                                      onChange={(e) =>
+                                        setEditedQuestion({ ...editedQuestion!, solution_latex: e.target.value })
+                                      }
+                                      placeholder="Enter solution in LaTeX format"
+                                      rows={4}
+                                      className="font-mono text-sm"
+                                    />
+                                    {editedQuestion?.solution_latex && (
+                                      <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                                        <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-1">Preview:</p>
+                                        <div className="text-sm">
+                                          <KatexRenderer>
+                                            {editedQuestion.solution_latex}
+                                          </KatexRenderer>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed break-words whitespace-normal">
-                                    {question.solution_latex ? (
-                                      <KatexRenderer>
-                                        {question.solution_latex}
-                                      </KatexRenderer>
-                                    ) : question.katex_solution ? (
-                                      <div dangerouslySetInnerHTML={{ __html: question.katex_solution }} />
-                                    ) : null}
+
+                                  <div className="flex justify-end gap-3 pt-4 border-t">
+                                    <Button
+                                      variant="outline"
+                                      size="default"
+                                      onClick={handleCancelEdit}
+                                    >
+                                      <X className="h-4 w-4 mr-2" />
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="default"
+                                      onClick={() => handleSaveQuestion(question._id)}
+                                      className="bg-gradient-to-r from-primary to-primary/80"
+                                    >
+                                      <Save className="h-4 w-4 mr-2" />
+                                      Save Changes
+                                    </Button>
                                   </div>
                                 </div>
+                              ) : (
+                                <div className="divide-y">
+                                  {/* Header Section */}
+                                  <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-3">
+                                          <Badge variant="default" className="text-sm px-3 py-1">
+                                            Question #{index + 1}
+                                          </Badge>
+                                          <Badge variant="secondary" className="text-sm">
+                                            {question.question_type || 'MCQ'}
+                                          </Badge>
+                                          <Badge variant={question.difficulty_rating >= 3 ? 'destructive' : question.difficulty_rating >= 2 ? 'default' : 'secondary'}>
+                                            {question.difficulty_rating >= 3 ? 'Hard' : question.difficulty_rating >= 2 ? 'Medium' : 'Easy'}
+                                          </Badge>
+                                        </div>
+                                        <div className="text-lg font-medium text-gray-900 dark:text-gray-100 leading-relaxed break-words whitespace-normal">
+                                          {question.latex_code ? (
+                                            <KatexRenderer>
+                                              {question.latex_code}
+                                            </KatexRenderer>
+                                          ) : question.katex_code ? (
+                                            <div dangerouslySetInnerHTML={{ __html: question.katex_code }} />
+                                          ) : (
+                                            <span className="italic text-gray-500">No question text available</span>
+                                          )}
+                                        </div>
+                                        {(question.subject || question.topic) && (
+                                          <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                                            {question.subject && <span>📚 {question.subject}</span>}
+                                            {question.topic && <span>🏷️ {question.topic}</span>}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditQuestion(question)}
+                                        className="hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                      >
+                                        <Edit className="h-5 w-5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Options Section */}
+                                  <div className="p-5 space-y-4">
+                                    {/* Correct Answer */}
+                                    {(question.correct_option_latex || question.correct_option_katex) && (
+                                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border-2 border-green-200 dark:border-green-800">
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
+                                            ✓
+                                          </div>
+                                          <span className="font-semibold text-green-700 dark:text-green-300">Correct Answer</span>
+                                        </div>
+                                        <div className="text-base text-green-900 dark:text-green-100 ml-8 break-words whitespace-normal">
+                                          {question.correct_option_latex ? (
+                                            <KatexRenderer>
+                                              {question.correct_option_latex}
+                                            </KatexRenderer>
+                                          ) : question.correct_option_katex ? (
+                                            <div dangerouslySetInnerHTML={{ __html: question.correct_option_katex }} />
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Incorrect Options */}
+                                    {((question.incorrect_option_latex && question.incorrect_option_latex.length > 0) ||
+                                      (question.incorrect_option_katex && question.incorrect_option_katex.length > 0)) && (
+                                        <div className="space-y-2">
+                                          <span className="font-semibold text-sm text-muted-foreground">Incorrect Options:</span>
+                                          {(question.incorrect_option_latex || question.incorrect_option_katex || []).map((option, idx) => (
+                                            <div key={idx} className="p-4 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                                              <div className="flex items-start gap-3">
+                                                <div className="h-6 w-6 rounded-full bg-red-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                                  ✗
+                                                </div>
+                                                <div className="text-base text-red-900 dark:text-red-100 flex-1 break-words whitespace-normal">
+                                                  {question.incorrect_option_latex && question.incorrect_option_latex[idx] ? (
+                                                    <KatexRenderer>
+                                                      {question.incorrect_option_latex[idx]}
+                                                    </KatexRenderer>
+                                                  ) : question.incorrect_option_katex && question.incorrect_option_katex[idx] ? (
+                                                    <div dangerouslySetInnerHTML={{ __html: question.incorrect_option_katex[idx] }} />
+                                                  ) : null}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                  </div>
+
+                                  {/* Solution Section */}
+                                  {(() => {
+                                    const hasSolution = question.solution_latex || question.katex_solution;
+                                    console.log(`🔍 Question ${question._id} solution check:`, {
+                                      hasSolution,
+                                      solution_latex: question.solution_latex,
+                                      katex_solution: question.katex_solution,
+                                      solutionLatexLength: question.solution_latex?.length || 0,
+                                      katexSolutionLength: question.katex_solution?.length || 0
+                                    });
+                                    return hasSolution;
+                                  })() && (
+                                      <div className="p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30">
+                                        <div className="flex items-center gap-2 mb-3">
+                                          <div className="h-7 w-7 rounded-full bg-purple-500 flex items-center justify-center text-white text-lg">
+                                            💡
+                                          </div>
+                                          <span className="font-bold text-lg text-purple-700 dark:text-purple-300">Solution</span>
+                                        </div>
+                                        <div className="text-base text-purple-900 dark:text-purple-100 ml-9 leading-relaxed break-words whitespace-normal">
+                                          {question.solution_latex ? (
+                                            <KatexRenderer>
+                                              {question.solution_latex}
+                                            </KatexRenderer>
+                                          ) : question.katex_solution ? (
+                                            <div dangerouslySetInnerHTML={{ __html: question.katex_solution }} />
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
                               )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                    })
-                  )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>
             </div>
           </DialogContent>
         </Dialog>
+        {/* Edit Question Bank Dialog */}
+        <Dialog open={isEditSetOpen} onOpenChange={setIsEditSetOpen}>
+          <DialogContent className="sm:max-w-[440px] glass-effect border-primary/20">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit className="h-5 w-5 text-primary" />
+                Edit Question Banks
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Set Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editSetData.name}
+                  onChange={(e) => setEditSetData({ ...editSetData, name: e.target.value })}
+                  placeholder="Enter set name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-course">Course Code</Label>
+                <Input
+                  id="edit-course"
+                  value={editSetData.course_code}
+                  onChange={(e) => setEditSetData({ ...editSetData, course_code: e.target.value })}
+                  placeholder="E.g., CS101"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-visibility">Visibility</Label>
+                <select
+                  id="edit-visibility"
+                  value={editSetData.visibility}
+                  onChange={(e) => setEditSetData({ ...editSetData, visibility: e.target.value })}
+                  className="w-full h-10 px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="private">🔒 Private — only visible to you</option>
+                  <option value="public">🌐 Public — visible to all teachers</option>
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {editSetData.visibility === 'private'
+                    ? 'Only you can see and use this question bank.'
+                    : 'All teachers can see this bank. Only your public questions will be visible to others.'}
+                </p>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setIsEditSetOpen(false)} disabled={savingEditSet}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdateBank}
+                  disabled={savingEditSet || !editSetData.name || !editSetData.course_code}
+                  className="bg-gradient-to-r from-primary to-primary/80"
+                >
+                  {savingEditSet ? (
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Saving...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteConfirmOpen} onOpenChange={(open) => { if (!open) { setIsDeleteConfirmOpen(false); setBankToDelete(null); } }}>
+          <DialogContent className="sm:max-w-[400px] glass-effect border-red-500/20">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                <Trash2 className="h-5 w-5" />
+                Delete Question Bank
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">"{bankToDelete?.name}"</span>?
+                This action cannot be undone.
+              </p>
+              <p className="text-xs text-muted-foreground bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-3">
+                ⚠️ All questions inside this bank will also deleted.
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => { setIsDeleteConfirmOpen(false); setBankToDelete(null); }}
+                  disabled={isDeletingBank}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteBank}
+                  disabled={isDeletingBank}
+                >
+                  {isDeletingBank ? (
+                    <span className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Deleting...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Delete Bank
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
+
+
   );
 };
 

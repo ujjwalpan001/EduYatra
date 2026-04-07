@@ -56,7 +56,7 @@ const CreateQuestion = () => {
     incorrectOptions: ['', '', ''],
     image: null,
     courseCode: '',
-    visibility: 'public',
+    visibility: 'private',
     topic: '',
     isDefault: false,
     solution: '',
@@ -801,24 +801,6 @@ const CreateQuestion = () => {
                     </datalist>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="visibility">Visibility</Label>
-                      <p className="text-xs text-muted-foreground">
-                        {formData.visibility === 'public' ? 'Visible to all' : 'Private'}
-                      </p>
-                    </div>
-                    <Switch
-                      id="visibility"
-                      checked={formData.visibility === 'public'}
-                      onCheckedChange={(checked) =>
-                        setFormData(prev => ({
-                          ...prev,
-                          visibility: checked ? 'public' : 'private'
-                        }))
-                      }
-                    />
-                  </div>
 
                   <div className="flex items-center justify-between pt-2">
                     <div className="space-y-1">
@@ -1105,27 +1087,6 @@ const CreateQuestion = () => {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Visibility *</Label>
-                      <div className="flex items-center gap-3 h-10">
-                        <Button
-                          type="button"
-                          variant={formData.visibility === 'public' ? 'default' : 'outline'}
-                          className="flex-1"
-                          onClick={() => setFormData(prev => ({ ...prev, visibility: 'public' }))}
-                        >
-                          Public
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={formData.visibility === 'private' ? 'default' : 'outline'}
-                          className="flex-1"
-                          onClick={() => setFormData(prev => ({ ...prev, visibility: 'private' }))}
-                        >
-                          Private
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 )}
 

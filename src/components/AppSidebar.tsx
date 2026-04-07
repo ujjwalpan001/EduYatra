@@ -88,7 +88,7 @@ export function AppSidebar({ role: propRole, inSheet = false }: AppSidebarProps)
       icon: BookOpen,
       items: [
         { title: "Create Question", href: "/questions/create" },
-        { title: "Review Question Sets", href: "/questions/review" },
+        { title: "Review Question Banks", href: "/questions/review" },
       ],
     },
     {

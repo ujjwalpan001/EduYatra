@@ -116,6 +116,7 @@ interface Question {
 interface QuestionBank {
   id: string;
   name: string;
+  createdByName?: string | null;
 }
 
 interface Group {
@@ -242,9 +243,10 @@ const ConductTestOnline: React.FC = () => {
         console.log('Question Banks Response:', banksData);
         if (!banksRes.ok) throw new Error(banksData.error || 'Failed to fetch question banks');
         setQuestionBanks(
-          (banksData.success ? banksData.questionBanks : banksData.data?.questionBanks || banksData.question_banks || banksData || []).map(bank => ({
+          (banksData.success ? banksData.questionBanks : banksData.data?.questionBanks || banksData.question_banks || banksData || []).map((bank: any) => ({
             id: bank._id || bank.id || '',
-            name: bank.name || `Unnamed Bank (${bank._id || bank.id || 'unknown'})`
+            name: bank.name || `Unnamed Bank (${bank._id || bank.id || 'unknown'})`,
+            createdByName: bank.createdByName || null,
           }))
         );
 
@@ -829,6 +831,11 @@ const ConductTestOnline: React.FC = () => {
                           return bank.id && (
                             <SelectItem key={bank.id} value={bank.id}>
                               {bank.name || `Unnamed Bank (${bank.id})`}
+                              {bank.createdByName && (
+                                <span className="text-muted-foreground ml-1 text-xs">
+                                  — by {bank.createdByName}
+                                </span>
+                              )}
                             </SelectItem>
                           );
                         }).filter(Boolean)
