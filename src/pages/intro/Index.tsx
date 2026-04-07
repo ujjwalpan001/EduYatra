@@ -27,18 +27,25 @@ const Index: React.FC = () => {
 
   const fetchContent = async () => {
     try {
-      const [slidersData, postersData, adsData, storiesData, videoData] = await Promise.all([
+      const [slidersRes, postersRes, adsRes, storiesRes, videoRes] = await Promise.allSettled([
         getPublicSliders(),
         getPublicPosters(),
         getPublicAds(),
         getPublicSuccessStories(),
         getPublicVideo()
       ]);
-      setSliders(slidersData.sliders || []);
-      setPosters(postersData.posters || []);
-      setAds(adsData.ads || []);
-      setSuccessStories(storiesData.stories || []);
-      setVideo(videoData.video || null);
+
+      setSliders(slidersRes.status === 'fulfilled' ? slidersRes.value.sliders || [] : []);
+      setPosters(postersRes.status === 'fulfilled' ? postersRes.value.posters || [] : []);
+      setAds(adsRes.status === 'fulfilled' ? adsRes.value.ads || [] : []);
+      setSuccessStories(storiesRes.status === 'fulfilled' ? storiesRes.value.stories || [] : []);
+      setVideo(videoRes.status === 'fulfilled' ? videoRes.value.video || null : null);
+
+      if (slidersRes.status === 'rejected') console.error('Failed to load sliders:', slidersRes.reason);
+      if (postersRes.status === 'rejected') console.error('Failed to load posters:', postersRes.reason);
+      if (adsRes.status === 'rejected') console.error('Failed to load ads:', adsRes.reason);
+      if (storiesRes.status === 'rejected') console.error('Failed to load success stories:', storiesRes.reason);
+      if (videoRes.status === 'rejected') console.error('Failed to load video:', videoRes.reason);
     } catch (error) {
       console.error('Error fetching content:', error);
     }
