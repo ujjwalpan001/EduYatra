@@ -118,7 +118,7 @@ function LayoutContent({ children, isStudent }: { children: React.ReactNode; isS
             ) : (
               // Teacher Menu
               teacherMenu.map((section) => (
-                <Collapsible key={section.title} className="space-y-1">
+                <Collapsible key={section.title} defaultOpen className="space-y-1">
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"

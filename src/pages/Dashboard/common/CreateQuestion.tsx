@@ -22,6 +22,13 @@ const questionSubjects = ["Mathematics", "Physics", "Chemistry", "Biology"];
 const questionTypes = ["MCQ", "True/False", "Fill in the Blanks", "Short Answer"];
 const difficultyLevels = ["Easy", "Medium", "Hard"];
 
+const getDifficultyRating = (difficulty: string): number => {
+  const normalized = difficulty?.toLowerCase();
+  if (normalized === 'hard') return 3;
+  if (normalized === 'medium') return 2;
+  return 1;
+};
+
 interface FormData {
   question: string;
   subject: string;
@@ -308,7 +315,7 @@ const CreateQuestion = () => {
           katex_code: ReactDOMServer.renderToString(<>{renderKatex(q.question)}</>),
           subject: formData.subject,
           level: formData.difficulty,
-          difficulty_rating: 0,
+          difficulty_rating: getDifficultyRating(formData.difficulty),
           correct_option_latex: q.correctOption,
           correct_option_katex: ReactDOMServer.renderToString(<>{renderKatex(q.correctOption)}</>),
           incorrect_option_latex: q.incorrectOptions,
@@ -450,7 +457,7 @@ const CreateQuestion = () => {
       instituteName: formData.instituteName,
       visibility: formData.visibility,
       questionBankName: formData.questionBankName,
-      difficulty_rating: 0,
+      difficulty_rating: getDifficultyRating(formData.difficulty),
       updated_at: new Date()
     };
 
@@ -754,7 +761,7 @@ const CreateQuestion = () => {
                       name="courseCode"
                       value={formData.courseCode}
                       onChange={handleInputChange}
-                      placeholder="Enter course code"
+                      placeholder="Select or type course code"
                       list="courses"
                       required
                     />
@@ -772,7 +779,7 @@ const CreateQuestion = () => {
                       name="questionBankName"
                       value={formData.questionBankName}
                       onChange={handleInputChange}
-                      placeholder="Enter question bank name"
+                      placeholder="Select or type question bank name"
                       list="questionBanks"
                       required
                     />
@@ -790,7 +797,7 @@ const CreateQuestion = () => {
                       name="instituteName"
                       value={formData.instituteName}
                       onChange={handleInputChange}
-                      placeholder="Enter institute name"
+                      placeholder="Select or type institute name"
                       list="institutes"
                       required
                     />
@@ -1062,7 +1069,7 @@ const CreateQuestion = () => {
                       <Input
                         value={formData.courseCode}
                         onChange={(e) => setFormData(prev => ({ ...prev, courseCode: e.target.value }))}
-                        placeholder="Enter course code"
+                        placeholder="Select or type course code"
                         list="courses-template"
                       />
                     </div>
@@ -1072,7 +1079,7 @@ const CreateQuestion = () => {
                       <Input
                         value={formData.questionBankName}
                         onChange={(e) => setFormData(prev => ({ ...prev, questionBankName: e.target.value }))}
-                        placeholder="Enter question bank name"
+                        placeholder="Select or type question bank name"
                         list="questionBanks-template"
                       />
                     </div>
@@ -1082,7 +1089,7 @@ const CreateQuestion = () => {
                       <Input
                         value={formData.instituteName}
                         onChange={(e) => setFormData(prev => ({ ...prev, instituteName: e.target.value }))}
-                        placeholder="Enter institute name"
+                        placeholder="Select or type institute name"
                         list="institutes-template"
                       />
                     </div>

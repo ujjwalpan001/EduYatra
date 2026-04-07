@@ -185,7 +185,7 @@ export function AppSidebar({ role: propRole, inSheet = false }: AppSidebarProps)
                 )}
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <Collapsible className="group/collapsible">
+                    <Collapsible defaultOpen className="group/collapsible">
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton

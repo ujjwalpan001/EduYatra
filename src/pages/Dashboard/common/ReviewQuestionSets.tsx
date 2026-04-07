@@ -593,7 +593,7 @@ const ReviewQuestionSets = () => {
                       </Badge>
                     </div>
                   </div>
-                  <Badge variant="outline">{set.course_code}</Badge>
+                  <Badge variant="outline">Course Code: {set.course_code || 'N/A'}</Badge>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">

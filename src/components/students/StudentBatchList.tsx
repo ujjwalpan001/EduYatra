@@ -75,7 +75,7 @@ export function StudentBatchList() {
   const [isSavingStudent, setIsSavingStudent] = useState(false);
   const { toast } = useToast();
 
-  // Fetch institutes, courses, and classes on mount
+  // Fetch institutes and classes on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -324,10 +324,10 @@ export function StudentBatchList() {
 
   // Save batch (create or update)
   const saveBatch = async () => {
-    if (!batchName || (!editingBatchId && (!invitationCode || !instituteId))) {
+    if (!batchName || (!editingBatchId && (!invitationCode || !instituteId || !courseId.trim()))) {
       toast({
         title: "Invalid input",
-        description: "Please fill all required fields (Batch Name, Invitation Code, and Institute)",
+        description: "Please fill all required fields (Batch Name, Invitation Code, Institute, and Course)",
         variant: "destructive",
       });
       return;
@@ -393,7 +393,7 @@ export function StudentBatchList() {
             class_name: batchName,
             invitation_code: invitationCode,
             institute_id: instituteId,
-            course_id: courseId,
+            course_id: courseId.trim(),
             max_students: null,
             students,
           },
@@ -850,11 +850,11 @@ export function StudentBatchList() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Course ID / Name</label>
+                  <label className="text-sm font-medium">Course</label>
                   <Input
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
-                    placeholder="Enter course ID or name (e.g. CS101)"
+                    placeholder="Enter course name/code (required)"
                   />
                 </div>
               </>
