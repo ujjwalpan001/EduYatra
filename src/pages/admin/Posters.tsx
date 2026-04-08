@@ -75,7 +75,7 @@ const Posters: React.FC = () => {
   const fetchPosters = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/content/posters');
+      const response = await api.get<{ posters: Poster[] }>('/api/content/posters');
       setPosters(response.data.posters);
     } catch (error) {
       console.error('Error fetching posters:', error);
@@ -92,10 +92,10 @@ const Posters: React.FC = () => {
     e.preventDefault();
     try {
       if (editingPoster) {
-        await api.put(`/api/admin/content/posters/${editingPoster._id}`, formData);
+        await api.put(`/api/content/posters/${editingPoster._id}`, formData);
         alert('Poster updated successfully!');
       } else {
-        await api.post('/api/admin/content/posters', formData);
+        await api.post('/api/content/posters', formData);
         alert('Poster created successfully!');
       }
       setShowModal(false);
@@ -112,7 +112,7 @@ const Posters: React.FC = () => {
   const handleDelete = async (posterId: string) => {
     if (window.confirm('Are you sure you want to delete this poster?')) {
       try {
-        await api.delete(`/api/admin/content/posters/${posterId}`);
+        await api.delete(`/api/content/posters/${posterId}`);
         fetchPosters();
       } catch (error) {
         console.error('Error deleting poster:', error);
@@ -122,7 +122,7 @@ const Posters: React.FC = () => {
 
   const toggleActive = async (posterId: string, currentStatus: boolean) => {
     try {
-      await api.put(`/api/admin/content/posters/${posterId}`, { is_active: !currentStatus });
+      await api.put(`/api/content/posters/${posterId}`, { is_active: !currentStatus });
       fetchPosters();
     } catch (error) {
       console.error('Error updating poster:', error);
@@ -132,7 +132,7 @@ const Posters: React.FC = () => {
 
   const togglePin = async (posterId: string, currentStatus: boolean) => {
     try {
-      await api.put(`/api/admin/content/posters/${posterId}`, { is_pinned: !currentStatus });
+      await api.put(`/api/content/posters/${posterId}`, { is_pinned: !currentStatus });
       fetchPosters();
     } catch (error) {
       console.error('Error updating poster:', error);

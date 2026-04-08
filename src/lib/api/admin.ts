@@ -89,85 +89,85 @@ export const getClassDetails = async (classId: string) => {
 // ==================== CONTENT MANAGEMENT ====================
 // Sliders
 export const listSliders = async (params: any) => {
-  const response = await api.get('/admin/content/sliders', { params });
+  const response = await api.get('/content/sliders', { params });
   return response.data;
 };
 
 export const createSlider = async (sliderData: any) => {
-  const response = await api.post('/admin/content/sliders', sliderData);
+  const response = await api.post('/content/sliders', sliderData);
   return response.data;
 };
 
 export const updateSlider = async (sliderId: string, updates: any) => {
-  const response = await api.put(`/admin/content/sliders/${sliderId}`, updates);
+  const response = await api.put(`/content/sliders/${sliderId}`, updates);
   return response.data;
 };
 
 export const deleteSlider = async (sliderId: string) => {
-  const response = await api.delete(`/admin/content/sliders/${sliderId}`);
+  const response = await api.delete(`/content/sliders/${sliderId}`);
   return response.data;
 };
 
 // Posters
 export const listPosters = async (params: any) => {
-  const response = await api.get('/admin/content/posters', { params });
+  const response = await api.get('/content/posters', { params });
   return response.data;
 };
 
 export const createPoster = async (posterData: any) => {
-  const response = await api.post('/admin/content/posters', posterData);
+  const response = await api.post('/content/posters', posterData);
   return response.data;
 };
 
 export const updatePoster = async (posterId: string, updates: any) => {
-  const response = await api.put(`/admin/content/posters/${posterId}`, updates);
+  const response = await api.put(`/content/posters/${posterId}`, updates);
   return response.data;
 };
 
 export const deletePoster = async (posterId: string) => {
-  const response = await api.delete(`/admin/content/posters/${posterId}`);
+  const response = await api.delete(`/content/posters/${posterId}`);
   return response.data;
 };
 
 // Ads
 export const listAds = async (params: any) => {
-  const response = await api.get('/admin/content/ads', { params });
+  const response = await api.get('/content/ads', { params });
   return response.data;
 };
 
 export const createAd = async (adData: any) => {
-  const response = await api.post('/admin/content/ads', adData);
+  const response = await api.post('/content/ads', adData);
   return response.data;
 };
 
 export const updateAd = async (adId: string, updates: any) => {
-  const response = await api.put(`/admin/content/ads/${adId}`, updates);
+  const response = await api.put(`/content/ads/${adId}`, updates);
   return response.data;
 };
 
 export const deleteAd = async (adId: string) => {
-  const response = await api.delete(`/admin/content/ads/${adId}`);
+  const response = await api.delete(`/content/ads/${adId}`);
   return response.data;
 };
 
 // Success Stories
 export const listSuccessStories = async (params: any) => {
-  const response = await api.get('/admin/content/success-stories', { params });
+  const response = await api.get('/content/success-stories', { params });
   return response.data;
 };
 
 export const createSuccessStory = async (storyData: any) => {
-  const response = await api.post('/admin/content/success-stories', storyData);
+  const response = await api.post('/content/success-stories', storyData);
   return response.data;
 };
 
 export const updateSuccessStory = async (storyId: string, updates: any) => {
-  const response = await api.put(`/admin/content/success-stories/${storyId}`, updates);
+  const response = await api.put(`/content/success-stories/${storyId}`, updates);
   return response.data;
 };
 
 export const deleteSuccessStory = async (storyId: string) => {
-  const response = await api.delete(`/admin/content/success-stories/${storyId}`);
+  const response = await api.delete(`/content/success-stories/${storyId}`);
   return response.data;
 };
 
@@ -311,21 +311,21 @@ export const createSuperAdmin = async (data: any) => {
 
 // ==================== VIDEO MANAGEMENT ====================
 export const listVideos = async (params: any) => {
-  const response = await api.get('/admin/content/videos', { params });
+  const response = await api.get('/content/videos', { params });
   return response.data;
 };
 
 export const createVideo = async (videoData: any) => {
-  const response = await api.post('/admin/content/videos', videoData);
+  const response = await api.post('/content/videos', videoData);
   return response.data;
 };
 
 export const updateVideo = async (videoId: string, videoData: any) => {
-  const response = await api.put(`/admin/content/videos/${videoId}`, videoData);
+  const response = await api.put(`/content/videos/${videoId}`, videoData);
   return response.data;
 };
 
 export const deleteVideo = async (videoId: string) => {
-  const response = await api.delete(`/admin/content/videos/${videoId}`);
+  const response = await api.delete(`/content/videos/${videoId}`);
   return response.data;
 };

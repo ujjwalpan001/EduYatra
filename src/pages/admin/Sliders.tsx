@@ -74,7 +74,7 @@ const Sliders: React.FC = () => {
   const fetchSliders = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/admin/content/sliders');
+      const response = await api.get<{ sliders: Slider[] }>('/api/content/sliders');
       setSliders(response.data.sliders);
     } catch (error) {
       console.error('Error fetching sliders:', error);
@@ -91,10 +91,10 @@ const Sliders: React.FC = () => {
     e.preventDefault();
     try {
       if (editingSlider) {
-        await api.put(`/api/admin/content/sliders/${editingSlider._id}`, formData);
+        await api.put(`/api/content/sliders/${editingSlider._id}`, formData);
         alert('Slider updated successfully!');
       } else {
-        await api.post('/api/admin/content/sliders', formData);
+        await api.post('/api/content/sliders', formData);
         alert('Slider created successfully!');
       }
       setShowModal(false);
@@ -111,7 +111,7 @@ const Sliders: React.FC = () => {
   const handleDelete = async (sliderId: string) => {
     if (window.confirm('Are you sure you want to delete this slider?')) {
       try {
-        await api.delete(`/api/admin/content/sliders/${sliderId}`);
+        await api.delete(`/api/content/sliders/${sliderId}`);
         fetchSliders();
       } catch (error) {
         console.error('Error deleting slider:', error);
@@ -121,7 +121,7 @@ const Sliders: React.FC = () => {
 
   const toggleActive = async (sliderId: string, currentStatus: boolean) => {
     try {
-      await api.put(`/api/admin/content/sliders/${sliderId}`, { is_active: !currentStatus });
+      await api.put(`/api/content/sliders/${sliderId}`, { is_active: !currentStatus });
       fetchSliders();
     } catch (error) {
       console.error('Error updating slider:', error);

@@ -35,11 +35,11 @@ const Index: React.FC = () => {
         getPublicVideo()
       ]);
 
-      setSliders(slidersRes.status === 'fulfilled' ? slidersRes.value.sliders || [] : []);
-      setPosters(postersRes.status === 'fulfilled' ? postersRes.value.posters || [] : []);
-      setAds(adsRes.status === 'fulfilled' ? adsRes.value.ads || [] : []);
-      setSuccessStories(storiesRes.status === 'fulfilled' ? storiesRes.value.stories || [] : []);
-      setVideo(videoRes.status === 'fulfilled' ? videoRes.value.video || null : null);
+      setSliders(slidersRes.status === 'fulfilled' ? (slidersRes.value as any)?.sliders || [] : []);
+      setPosters(postersRes.status === 'fulfilled' ? (postersRes.value as any)?.posters || [] : []);
+      setAds(adsRes.status === 'fulfilled' ? (adsRes.value as any)?.ads || [] : []);
+      setSuccessStories(storiesRes.status === 'fulfilled' ? (storiesRes.value as any)?.stories || [] : []);
+      setVideo(videoRes.status === 'fulfilled' ? (videoRes.value as any)?.video || null : null);
 
       if (slidersRes.status === 'rejected') console.error('Failed to load sliders:', slidersRes.reason);
       if (postersRes.status === 'rejected') console.error('Failed to load posters:', postersRes.reason);
@@ -358,7 +358,6 @@ const Index: React.FC = () => {
         </section>
       )}
 
-      {/* ction>
 
       {/* Features Grid */}
       <section className="py-24 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500">
