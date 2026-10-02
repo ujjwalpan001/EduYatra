@@ -3,11 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { User, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
+import { User, ArrowLeft, Eye, EyeOff, Check, X, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { API_URL } from "@/config/api";
+
+// Sign-up is invite-only for now. Only the SHA-256 hash of the invite code is stored here,
+// so the code itself never appears in the bundle. To change the code, replace this hash;
+// to reopen sign-up, remove the invite code field and this check.
+const INVITE_CODE_SHA256 = "ac9d29be723c921f49ece35e32883b056c137613cdc48d665e7c3b4f1c0919bb";
+
+const sha256Hex = async (value: string) => {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+};
+
+const isValidInviteCode = async (code: string) =>
+  (await sha256Hex(code.trim().toUpperCase())) === INVITE_CODE_SHA256;
 
 interface Profile {
   name: string;
@@ -46,6 +59,7 @@ const SignUp = () => {
     adminCode: "",
     institution: "",
     institute: "",
+    inviteCode: "",
   });
   const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [institutesLoading, setInstitutesLoading] = useState(true);
@@ -126,6 +140,7 @@ const SignUp = () => {
   const isPasswordValid = () => Object.values(passwordValidation).every(Boolean);
 
   const isFormValid = () =>
+    formData.inviteCode.trim() &&
     formData.fullName &&
     formData.email &&
     validateGmail(formData.email) &&
@@ -140,6 +155,11 @@ const SignUp = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!(await isValidInviteCode(formData.inviteCode))) {
+      toast.error("❌ Invalid invite code");
+      return;
+    }
 
     if (!validateGmail(formData.email)) {
       toast.error("❌ Please enter a valid Gmail address");
@@ -159,7 +179,8 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post<SignupResponse>(`${API_URL}/users/signup`, formData);
+      const { inviteCode, ...signupData } = formData;
+      const response = await axios.post<SignupResponse>(`${API_URL}/users/signup`, signupData);
       const { token, role, isSuperAdmin, permissions } = response.data;
 
       const decoded: any = jwtDecode(token);
@@ -191,6 +212,7 @@ const SignUp = () => {
         adminCode: "",
         institution: "",
         institute: "",
+        inviteCode: "",
       });
       setPasswordValidation({
         length: false,
@@ -250,6 +272,27 @@ const SignUp = () => {
 
           <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                <Label htmlFor="inviteCode" className="flex items-center">
+                  <KeyRound className="w-4 h-4 mr-1.5 text-blue-600" />
+                  Invite Code
+                </Label>
+                <Input
+                  id="inviteCode"
+                  name="inviteCode"
+                  type="text"
+                  placeholder="Enter your invite code"
+                  value={formData.inviteCode}
+                  onChange={handleChange}
+                  autoComplete="off"
+                  className="bg-white uppercase placeholder:normal-case"
+                  required
+                />
+                <p className="text-xs text-gray-600">
+                  Sign-up is currently invite-only. Contact the Deskoros team to get an invite code.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input

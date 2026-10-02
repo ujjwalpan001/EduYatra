@@ -13,6 +13,10 @@ import Features from "./pages/intro/Features";
 import Courses from "./pages/intro/Courses";
 import Tutoring from "./pages/intro/Tutoring";
 import Schools from "./pages/intro/Schools";
+import About from "./pages/intro/About";
+import Contact from "./pages/intro/Contact";
+import Privacy from "./pages/intro/Privacy";
+import Terms from "./pages/intro/Terms";
 import Signin from "./pages/auth/Signin";
 import Signup from "./pages/auth/Signup";
 import StudentAuth from "./pages/auth/StudentAuth";
@@ -80,6 +84,10 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/tutoring" element={<Tutoring />} />
             <Route path="/schools" element={<Schools />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact-us" element={<Contact />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/SIgnin" element={<Signin />} />
             <Route path="/SIgnup" element={<Signup />} />
             <Route path="/auth/student" element={<StudentAuth />} />
