@@ -689,7 +689,7 @@ const Index: React.FC = () => {
           heroRef.current?.style.setProperty('--rx', '0deg');
           heroRef.current?.style.setProperty('--ry', '0deg');
         }}
-        className="relative overflow-hidden flex flex-col pt-16 lg:min-h-[100svh] bg-gradient-to-br from-blue-950 via-blue-800 to-cyan-600 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-xl shadow-blue-900/10"
+        className="relative overflow-hidden flex flex-col pt-[4.5rem] lg:min-h-[100svh] bg-gradient-to-br from-blue-950 via-blue-800 to-cyan-600 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-xl shadow-blue-900/10"
       >
         {/* Grid pattern + glow */}
         <div className="absolute inset-0 hero-grid opacity-40"></div>

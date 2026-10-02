@@ -39,7 +39,7 @@ const Navbar: React.FC<NavbarProps> = ({ overHero = false }) => {
   const solutionsActive = SOLUTIONS.some((item) => isActive(item.to));
 
   const linkClass = (active: boolean) =>
-    `nav-link relative px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+    `nav-link relative px-4 py-2 rounded-lg text-[15px] font-semibold transition-colors ${
       active ? 'text-white nav-link-active' : 'text-blue-100/85 hover:text-white'
     }`;
 
@@ -48,21 +48,21 @@ const Navbar: React.FC<NavbarProps> = ({ overHero = false }) => {
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b ${
         solid
           ? 'bg-[#0b1640]/90 backdrop-blur-xl border-white/10 shadow-lg shadow-blue-950/20'
-          : 'bg-transparent border-white/10'
+          : 'bg-transparent border-white/15'
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center justify-between h-[4.5rem]">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md shadow-blue-950/30 ring-1 ring-white/40 group-hover:scale-105 group-hover:rotate-[-4deg] transition-transform">
-              <img src="/logo.svg" alt="" className="w-6 h-6" />
+            <span className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md shadow-blue-950/30 ring-1 ring-white/40 group-hover:scale-105 group-hover:rotate-[-4deg] transition-transform">
+              <img src="/logo.svg" alt="" className="w-7 h-7" />
             </span>
-            <span className="text-lg font-bold tracking-tight text-white">Deskoros</span>
+            <span className="text-xl font-extrabold tracking-tight text-white">Deskoros</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-4">
             <Link to="/features" className={linkClass(isActive('/features'))}>Features</Link>
 
             <div
@@ -112,15 +112,15 @@ const Navbar: React.FC<NavbarProps> = ({ overHero = false }) => {
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-3">
             <Link to="/signin">
-              <Button variant="ghost" className="h-10 px-4 rounded-xl text-white hover:text-white hover:bg-white/10 border border-white/20">
+              <Button variant="ghost" className="h-11 px-5 rounded-xl text-[15px] font-semibold text-white hover:text-white hover:bg-white/10 border border-white/25">
                 <LogIn className="w-4 h-4 mr-1.5" />
                 Login
               </Button>
             </Link>
             <Link to="/signup">
-              <Button className="h-10 px-5 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-semibold shadow-lg shadow-blue-950/30 hover:-translate-y-0.5 transition-all">
+              <Button className="h-11 px-6 rounded-xl text-[15px] bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-lg shadow-blue-950/30 hover:-translate-y-0.5 transition-all">
                 <Sparkles className="w-4 h-4 mr-1.5" />
                 Sign Up
               </Button>
@@ -146,7 +146,7 @@ const Navbar: React.FC<NavbarProps> = ({ overHero = false }) => {
           showMobileMenu ? 'max-h-[34rem] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="container mx-auto px-4 pb-5 pt-1 space-y-1 border-t border-white/10">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pb-5 pt-2 space-y-1 border-t border-white/10">
           <Link
             to="/features"
             onClick={() => setShowMobileMenu(false)}
@@ -200,8 +200,8 @@ const Navbar: React.FC<NavbarProps> = ({ overHero = false }) => {
         .nav-link::after {
           content: '';
           position: absolute;
-          left: 0.875rem;
-          right: 0.875rem;
+          left: 1rem;
+          right: 1rem;
           bottom: 0.25rem;
           height: 2px;
           border-radius: 2px;

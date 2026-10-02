@@ -19,7 +19,7 @@ const PageShell: React.FC<PageShellProps> = ({ badge, title, subtitle, children 
     <div className="min-h-screen bg-slate-50 overflow-x-hidden">
       <Navbar overHero />
 
-      <header className="relative overflow-hidden pt-16 bg-gradient-to-br from-blue-950 via-blue-800 to-cyan-600 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-xl shadow-blue-900/10">
+      <header className="relative overflow-hidden pt-[4.5rem] bg-gradient-to-br from-blue-950 via-blue-800 to-cyan-600 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-xl shadow-blue-900/10">
         <div className="absolute inset-0 page-grid opacity-40"></div>
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-32 -right-24 w-[420px] h-[420px] bg-blue-400/20 rounded-full blur-3xl"></div>
